@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NPB EV ダッシュボード v7.1 (Gemini)</title>
+<title>NPB EV ダッシュボード v7.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
@@ -23,24 +23,14 @@
     min-height: 100vh; padding: 16px 10px 40px;
   }
   .container { max-width: 100%; margin: 0 auto; }
-  header {
-    border-top: 3px double var(--ink); border-bottom: 3px double var(--ink);
-    padding: 12px 0; margin-bottom: 16px; text-align: center;
-  }
+  header { border-top: 3px double var(--ink); border-bottom: 3px double var(--ink); padding: 12px 0; margin-bottom: 16px; text-align: center; }
   h1 { font-size: clamp(20px, 5vw, 28px); font-weight: 800; letter-spacing: 0.04em; }
   h1 .accent { color: var(--crimson); font-style: italic; }
   .subtitle { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--grey); margin-top: 4px; }
-  .upload-panel {
-    background: var(--paper-2); border: 2px dashed var(--ink);
-    padding: 14px; margin-bottom: 16px; text-align: center;
-  }
+  .upload-panel { background: var(--paper-2); border: 2px dashed var(--ink); padding: 14px; margin-bottom: 16px; text-align: center; }
   .upload-panel.has-image { border-style: solid; }
   .upload-panel h3 { font-size: 13px; margin-bottom: 8px; letter-spacing: 0.08em; }
-  .file-btn {
-    display: inline-block; padding: 8px 16px; background: var(--ink); color: var(--paper);
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
-    cursor: pointer; border: none; margin: 4px;
-  }
+  .file-btn { display: inline-block; padding: 8px 16px; background: var(--ink); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; cursor: pointer; border: none; margin: 4px; }
   .file-btn.action { background: var(--crimson); }
   .file-btn.green { background: var(--green); }
   .file-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -51,36 +41,21 @@
   .ocr-status.loading { background: var(--gold); }
   .ocr-status.success { background: var(--green); color: var(--paper); }
   .ocr-status.error { background: var(--crimson-dark); color: var(--paper); }
-  .game-card {
-    background: var(--paper-2); border: 1.5px solid var(--ink);
-    padding: 12px 12px 14px; margin-bottom: 14px; position: relative;
-  }
+  .game-card { background: var(--paper-2); border: 1.5px solid var(--ink); padding: 12px 12px 14px; margin-bottom: 14px; position: relative; }
   .game-card.fav-away { border-left: 5px solid var(--crimson); }
   .game-card.fav-home { border-left: 5px solid var(--indigo); }
   .matchup { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-  .team-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 4px 6px; font-size: 13px; font-weight: 700;
-    border-bottom: 1px dashed var(--grey-light); flex-wrap: wrap; gap: 4px;
-  }
+  .team-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; font-size: 13px; font-weight: 700; border-bottom: 1px dashed var(--grey-light); flex-wrap: wrap; gap: 4px; }
   .team-row.away { background: rgba(184,32,43,0.05); }
   .team-row.home { background: rgba(26,41,64,0.05); }
   .team-name { display: flex; align-items: baseline; gap: 6px; flex: 1; min-width: 130px; }
-  .team-name input.team-input {
-    font-family: 'Shippori Mincho', serif; font-size: 13px; font-weight: 700;
-    background: transparent; border: none; border-bottom: 1px dashed var(--grey);
-    padding: 2px 0; flex: 1; min-width: 80px; max-width: 150px; color: var(--ink);
-  }
+  .team-name input.team-input { font-family: 'Shippori Mincho', serif; font-size: 13px; font-weight: 700; background: transparent; border: none; border-bottom: 1px dashed var(--grey); padding: 2px 0; flex: 1; min-width: 80px; max-width: 150px; color: var(--ink); }
   .team-tag { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--grey); letter-spacing: 0.1em; }
   .team-fav-mark { background: var(--gold); color: var(--ink); font-size: 8px; padding: 1px 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
   .odds-trio { display: flex; gap: 4px; font-family: 'JetBrains Mono', monospace; }
   .odd-cell { background: var(--paper); padding: 3px 4px; border: 1px solid var(--grey-light); text-align: center; min-width: 56px; }
   .odd-cell .lbl { font-size: 8px; color: var(--grey); display: block; }
-  .odd-cell input.odd-input {
-    width: 50px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    font-weight: 600; text-align: center; border: none; background: transparent;
-    padding: 0; color: var(--ink);
-  }
+  .odd-cell input.odd-input { width: 50px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-align: center; border: none; background: transparent; padding: 0; color: var(--ink); }
   .odd-cell input.odd-input:focus { outline: 1px solid var(--crimson); }
   .game-meta { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--grey); letter-spacing: 0.1em; margin-bottom: 8px; }
   .game-meta .strong-tag { background: var(--ink); color: var(--paper); padding: 2px 6px; margin-right: 6px; }
@@ -124,7 +99,7 @@
 <div class="container">
   <header>
     <h1>NPB EV <span class="accent">ダッシュボード</span></h1>
-    <div class="subtitle">Gemini API版 v7.1 ・ thinking無効化</div>
+    <div class="subtitle">Gemini API版 v7.2 ・ 適正ハンデ表示対応</div>
   </header>
 
   <div id="apikeyPanel" style="background:#fff7d6;border:2px solid var(--gold);padding:12px;margin-bottom:14px;display:none;">
@@ -135,11 +110,8 @@
       ③ AIzaSy... をコピー<br>
       ④ 下に貼付して「保存」
     </div>
-    <input type="text" id="apikeyInput" placeholder="AIzaSy..." autocorrect="off" autocapitalize="off" spellcheck="false"
-      style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px;border:1.5px solid var(--ink);">
-    <div style="margin-top:6px;">
-      <button class="file-btn green" id="saveApikeyBtn">保存して開始</button>
-    </div>
+    <input type="text" id="apikeyInput" placeholder="AIzaSy..." autocorrect="off" autocapitalize="off" spellcheck="false" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px;border:1.5px solid var(--ink);">
+    <div style="margin-top:6px;"><button class="file-btn green" id="saveApikeyBtn">保存して開始</button></div>
   </div>
 
   <div id="apikeyStatusPanel" style="background:var(--paper-2);border:1px solid var(--ink);padding:8px 12px;margin-bottom:12px;display:none;font-family:'JetBrains Mono',monospace;font-size:10px;">
@@ -161,9 +133,7 @@
       <summary style="cursor:pointer;font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace;">⚙️ 詳細ログ / 手動JSON貼付</summary>
       <div style="margin-top:8px;">
         <div style="font-size:10px;font-weight:700;margin-bottom:4px;">📥 手動でJSON貼付:</div>
-        <textarea id="jsonInput" autocorrect="off" autocapitalize="off" spellcheck="false"
-          placeholder='[ { "time":"14:00", "away":"...", ... } ]'
-          style="width:100%;height:80px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px;border:1px solid var(--ink);"></textarea>
+        <textarea id="jsonInput" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder='[ { "time":"14:00", "away":"...", ... } ]' style="width:100%;height:80px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px;border:1px solid var(--ink);"></textarea>
         <button class="file-btn" id="applyJsonBtn">JSONから更新</button>
       </div>
       <div style="margin-top:8px;">
@@ -173,48 +143,38 @@
     </details>
   </div>
 
-  <div class="actions">
-    <button class="file-btn" id="addGameBtn">+ 試合追加</button>
-  </div>
-
+  <div class="actions"><button class="file-btn" id="addGameBtn">+ 試合追加</button></div>
   <div id="games"></div>
-
-  <footer>v7.1 ・ Gemini 2.5 Flash (thinking無効化) ・ ロジック準拠: v17</footer>
+  <footer>v7.2 ・ Gemini 2.5 Flash ・ 適正ハンデ追加 ・ ロジック準拠: v17</footer>
 </div>
 
 <script>
 const DEFAULT_GAMES = [
-  { time:'14:00', away:'千葉ロッテ', awayOdds:2.910, awayHcap:{sign:1, odds:1.917},
-                  home:'福岡ソフトバンク', homeOdds:1.450, homeHcap:{sign:-1, odds:1.952} },
-  { time:'14:00', away:'読売巨人', awayOdds:2.230, awayHcap:{sign:1, odds:1.549},
-                  home:'中日', homeOdds:1.719, homeHcap:{sign:-1, odds:2.560} },
-  { time:'14:00', away:'北海道日本ハム', awayOdds:1.819, awayHcap:{sign:-1, odds:2.470},
-                  home:'オリックス', homeOdds:2.080, homeHcap:{sign:1, odds:1.584} },
-  { time:'14:00', away:'東京ヤクルト', awayOdds:2.110, awayHcap:{sign:1, odds:1.413},
-                  home:'広島', homeOdds:1.800, homeHcap:{sign:-1, odds:3.020} },
-  { time:'14:00', away:'横浜DeNA', awayOdds:2.670, awayHcap:{sign:1, odds:1.751},
-                  home:'阪神', homeOdds:1.520, homeHcap:{sign:-1, odds:2.160} },
-  { time:'14:00', away:'東北楽天', awayOdds:2.090, awayHcap:{sign:1, odds:1.425},
-                  home:'埼玉西武', homeOdds:1.813, homeHcap:{sign:-1, odds:2.970} },
+  { time:'14:00', away:'千葉ロッテ', awayOdds:2.910, awayHcap:{sign:1, odds:1.917}, home:'福岡ソフトバンク', homeOdds:1.450, homeHcap:{sign:-1, odds:1.952} },
+  { time:'14:00', away:'読売巨人', awayOdds:2.230, awayHcap:{sign:1, odds:1.549}, home:'中日', homeOdds:1.719, homeHcap:{sign:-1, odds:2.560} },
+  { time:'14:00', away:'北海道日本ハム', awayOdds:1.819, awayHcap:{sign:-1, odds:2.470}, home:'オリックス', homeOdds:2.080, homeHcap:{sign:1, odds:1.584} },
+  { time:'14:00', away:'東京ヤクルト', awayOdds:2.110, awayHcap:{sign:1, odds:1.413}, home:'広島', homeOdds:1.800, homeHcap:{sign:-1, odds:3.020} },
+  { time:'14:00', away:'横浜DeNA', awayOdds:2.670, awayHcap:{sign:1, odds:1.751}, home:'阪神', homeOdds:1.520, homeHcap:{sign:-1, odds:2.160} },
+  { time:'14:00', away:'東北楽天', awayOdds:2.090, awayHcap:{sign:1, odds:1.425}, home:'埼玉西武', homeOdds:1.813, homeHcap:{sign:-1, odds:2.970} },
 ];
 
 let GAMES = JSON.parse(JSON.stringify(DEFAULT_GAMES));
 const sliderState = {};
 
 const HANDICAPS = {
-  '0':    { cat:'zero' },
-  '0.1':  { cat:'small', frac:0.1 }, '0.2': { cat:'small', frac:0.2 }, '0.3': { cat:'small', frac:0.3 },
-  '0.4':  { cat:'small', frac:0.4 }, '0.5': { cat:'small', frac:0.5 }, '0.6': { cat:'small', frac:0.6 },
-  '0.7':  { cat:'small', frac:0.7 }, '0.8': { cat:'small', frac:0.8 }, '0.9': { cat:'small', frac:0.9 },
-  '1.0':  { cat:'one' },
-  '1.1':  { cat:'midOne', frac:0.1 }, '1.2': { cat:'midOne', frac:0.2 }, '1.3': { cat:'midOne', frac:0.3 },
-  '1.4':  { cat:'midOne', frac:0.4 }, '1.5': { cat:'midOne', frac:0.5 }, '1.6': { cat:'midOne', frac:0.6 },
-  '1.7':  { cat:'midOne', frac:0.7 }, '1.8': { cat:'midOne', frac:0.8 }, '1.9': { cat:'midOne', frac:0.9 },
-  '1半':   { cat:'half' },
+  '0': { cat:'zero' },
+  '0.1': { cat:'small', frac:0.1 }, '0.2': { cat:'small', frac:0.2 }, '0.3': { cat:'small', frac:0.3 },
+  '0.4': { cat:'small', frac:0.4 }, '0.5': { cat:'small', frac:0.5 }, '0.6': { cat:'small', frac:0.6 },
+  '0.7': { cat:'small', frac:0.7 }, '0.8': { cat:'small', frac:0.8 }, '0.9': { cat:'small', frac:0.9 },
+  '1.0': { cat:'one' },
+  '1.1': { cat:'midOne', frac:0.1 }, '1.2': { cat:'midOne', frac:0.2 }, '1.3': { cat:'midOne', frac:0.3 },
+  '1.4': { cat:'midOne', frac:0.4 }, '1.5': { cat:'midOne', frac:0.5 }, '1.6': { cat:'midOne', frac:0.6 },
+  '1.7': { cat:'midOne', frac:0.7 }, '1.8': { cat:'midOne', frac:0.8 }, '1.9': { cat:'midOne', frac:0.9 },
+  '1半': { cat:'half' },
   '1半1': { cat:'half_x', frac:0.1 }, '1半2': { cat:'half_x', frac:0.2 }, '1半3': { cat:'half_x', frac:0.3 },
   '1半4': { cat:'half_x', frac:0.4 }, '1半5': { cat:'half_x', frac:0.5 }, '1半6': { cat:'half_x', frac:0.6 },
   '1半7': { cat:'half_x', frac:0.7 }, '1半8': { cat:'half_x', frac:0.8 }, '1半9': { cat:'half_x', frac:0.9 },
-  '2.0':  { cat:'two' },
+  '2.0': { cat:'two' },
 };
 const HANDICAP_KEYS = Object.keys(HANDICAPS);
 
@@ -272,8 +232,7 @@ function estimateProbs(O_fav, O_dog, O_hfav, O_hdog, favIsHome) {
   const baseF3Ratio = 0.55 + 0.4 * (p_fav_ext - 0.5);
   const haAdjF3 = favIsHome ? -0.10 : 0.05;
   const f3Ratio = Math.max(0.30, Math.min(0.85, baseF3Ratio + haAdjF3));
-  return { F3: F23_n*f3Ratio, F2: F23_n*(1-f3Ratio), F1: F1_n, T: T_n, D: D_n,
-           F23: F23_n, p_yes_naked, p_fav_ext };
+  return { F3: F23_n*f3Ratio, F2: F23_n*(1-f3Ratio), F1: F1_n, T: T_n, D: D_n, F23: F23_n, p_yes_naked, p_fav_ext };
 }
 
 function calcEV(probs, hkey) {
@@ -284,6 +243,38 @@ function calcEV(probs, hkey) {
     evDog += probs[sc] * payoutFor(h, sc, 'dog');
   }
   return { evFav, evDog };
+}
+
+function handicapToValue(hkey) {
+  const h = HANDICAPS[hkey];
+  if (!h) return 0;
+  if (h.cat === 'zero')    return 0;
+  if (h.cat === 'small')   return h.frac * 0.5;
+  if (h.cat === 'one')     return 1.0;
+  if (h.cat === 'midOne')  return 1.0 + h.frac * 0.5;
+  if (h.cat === 'half')    return 1.5;
+  if (h.cat === 'half_x')  return 1.5 + h.frac * 0.5;
+  if (h.cat === 'two')     return 2.0;
+  return 0;
+}
+
+function findFairHandicap(probs) {
+  const evs = HANDICAP_KEYS.map(hkey => ({ hkey, evFav: calcEV(probs, hkey).evFav, value: handicapToValue(hkey) }));
+  for (let i = 0; i < evs.length - 1; i++) {
+    if (evs[i].evFav >= 0 && evs[i+1].evFav < 0) {
+      const t = evs[i].evFav / (evs[i].evFav - evs[i+1].evFav);
+      const fairValue = evs[i].value + t * (evs[i+1].value - evs[i].value);
+      return { value: fairValue, lower: evs[i].hkey, upper: evs[i+1].hkey, beyond: false };
+    }
+  }
+  if (evs[evs.length-1].evFav >= 0) return { value: 2.0, beyond: true, dir: 'high' };
+  return { value: 0, beyond: true, dir: 'low' };
+}
+
+function fairToLabel(fair) {
+  if (fair.beyond) return fair.dir === 'high' ? '2.0以上' : '0以下';
+  if (fair.lower === fair.upper) return fair.lower;
+  return `${fair.lower} 〜 ${fair.upper}`;
 }
 
 function suggestInitialHcap(O_fav) {
@@ -312,9 +303,7 @@ function fillGameCard(idx) {
   const haLabel = favIsHome ? 'ホーム' : 'アウェイ';
 
   card.innerHTML = `
-    <div style="text-align:right;margin-bottom:4px;">
-      <button class="file-btn" style="font-size:9px;padding:2px 6px;background:var(--grey);" onclick="removeGame(${idx})">×</button>
-    </div>
+    <div style="text-align:right;margin-bottom:4px;"><button class="file-btn" style="font-size:9px;padding:2px 6px;background:var(--grey);" onclick="removeGame(${idx})">×</button></div>
     <div class="matchup">
       <div class="team-row away">
         <div class="team-name">
@@ -339,15 +328,15 @@ function fillGameCard(idx) {
         </div>
       </div>
     </div>
-    <div class="game-meta">
-      <span class="strong-tag">強い側 = ${escapeHtml(favName)} (${haLabel})</span>${game.time}
-    </div>
+    <div class="game-meta"><span class="strong-tag">強い側 = ${escapeHtml(favName)} (${haLabel})</span>${game.time}</div>
     <div class="slider-wrap">
-      <div class="slider-row">
-        <span class="slider-label">B社ハンデ</span>
-        <span class="slider-value" id="hcap-val-${idx}">―</span>
-      </div>
+      <div class="slider-row"><span class="slider-label">B社ハンデ</span><span class="slider-value" id="hcap-val-${idx}">―</span></div>
       <input type="range" id="hcap-slider-${idx}" min="0" max="${HANDICAP_KEYS.length-1}" value="15" step="1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px dashed var(--grey-light);">
+        <span style="font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--grey);">適正ハンデ(EV=0)</span>
+        <span id="fair-hcap-${idx}" style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--indigo);">―</span>
+      </div>
+      <div id="fair-hcap-hint-${idx}" style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--grey);text-align:right;margin-top:2px;"></div>
     </div>
     <div class="probs-mini">
       <div class="f23"><div class="lab">F23</div><div class="val" id="p-f23-${idx}">―</div></div>
@@ -414,6 +403,27 @@ function updateEV(idx) {
   const hkey = HANDICAP_KEYS[parseInt(slider.value, 10)];
   document.getElementById(`hcap-val-${idx}`).textContent = hkey;
 
+  const fair = findFairHandicap(probs);
+  const fairEl = document.getElementById(`fair-hcap-${idx}`);
+  const fairHintEl = document.getElementById(`fair-hcap-hint-${idx}`);
+  fairEl.textContent = fairToLabel(fair);
+  if (fair.beyond) {
+    fairHintEl.textContent = fair.dir === 'high' ? '※全ハンデで強い側EV+' : '※全ハンデで強い側EV−';
+    fairHintEl.style.color = 'var(--grey)';
+  } else {
+    const currentValue = handicapToValue(hkey);
+    if (currentValue < fair.value) {
+      fairHintEl.textContent = `現在${hkey} < 適正 → 強い側EV+`;
+      fairHintEl.style.color = 'var(--green)';
+    } else if (currentValue > fair.value) {
+      fairHintEl.textContent = `現在${hkey} > 適正 → 弱い側EV+`;
+      fairHintEl.style.color = 'var(--green)';
+    } else {
+      fairHintEl.textContent = '現在ハンデ ≒ 適正';
+      fairHintEl.style.color = 'var(--grey)';
+    }
+  }
+
   const { evFav, evDog } = calcEV(probs, hkey);
   const fmt = (v) => (v >= 0 ? '+' : '') + v.toFixed(4);
   const pct = (v) => (v >= 0 ? '+' : '') + (v*100).toFixed(2) + '%';
@@ -452,15 +462,10 @@ function updateEV(idx) {
   }
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 function addGame() {
-  GAMES.push({
-    time:'14:00', away:'チームA', awayOdds:2.0, awayHcap:{sign:1, odds:1.85},
-    home:'チームB', homeOdds:1.85, homeHcap:{sign:-1, odds:2.0}
-  });
+  GAMES.push({ time:'14:00', away:'チームA', awayOdds:2.0, awayHcap:{sign:1, odds:1.85}, home:'チームB', homeOdds:1.85, homeHcap:{sign:-1, odds:2.0} });
   redrawAll();
 }
 
@@ -511,7 +516,7 @@ function loadImage(file) {
         currentImageMediaType = m[1];
         currentImageBase64 = m[2];
         ocrBtn.disabled = false;
-        ocrStatus.textContent = `画像読み込み完了(${w}×${h}, ${(currentImageBase64.length*0.75/1024).toFixed(0)}KB)`;
+        ocrStatus.textContent = `画像読み込み完了(${w}×${h})`;
         ocrStatus.className = 'ocr-status';
       }
     };
@@ -520,10 +525,7 @@ function loadImage(file) {
   reader.readAsDataURL(file);
 }
 
-imgInput.addEventListener('change', (e) => {
-  const f = e.target.files[0];
-  if (f) loadImage(f);
-});
+imgInput.addEventListener('change', (e) => { const f = e.target.files[0]; if (f) loadImage(f); });
 
 document.addEventListener('paste', (e) => {
   const items = e.clipboardData?.items;
@@ -590,32 +592,20 @@ ocrBtn.addEventListener('click', async () => {
           { inline_data: { mime_type: currentImageMediaType, data: currentImageBase64 } }
         ]
       }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 8000,
-        responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 }
-      }
+      generationConfig: { temperature: 0.1, maxOutputTokens: 8000, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } }
     };
 
     debugLog.textContent = `[Model] gemini-2.5-flash (thinking無効)\n[base64] ${currentImageBase64.length}文字\n\n`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody)
-    });
+    const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
     debugLog.textContent += `[HTTP] ${response.status}\n`;
     const responseText = await response.text();
     debugLog.textContent += `[Raw]\n${responseText.slice(0, 2000)}\n`;
 
     if (!response.ok) {
       let errMsg = `Gemini APIエラー ${response.status}`;
-      try {
-        const errData = JSON.parse(responseText);
-        if (errData.error?.message) errMsg += `: ${errData.error.message.slice(0, 200)}`;
-      } catch (e) {}
+      try { const errData = JSON.parse(responseText); if (errData.error?.message) errMsg += `: ${errData.error.message.slice(0, 200)}`; } catch (e) {}
       throw new Error(errMsg);
     }
 
@@ -623,9 +613,7 @@ ocrBtn.addEventListener('click', async () => {
     if (!data.candidates || !data.candidates[0]) throw new Error('candidatesが空');
     const cand = data.candidates[0];
     let text = '';
-    for (const part of (cand.content?.parts || [])) {
-      if (part.text) text += part.text;
-    }
+    for (const part of (cand.content?.parts || [])) { if (part.text) text += part.text; }
     if (!text.trim()) throw new Error('text content が空');
     debugLog.textContent += `\n[Text]\n${text.slice(0, 1500)}\n`;
 
@@ -647,11 +635,7 @@ ocrBtn.addEventListener('click', async () => {
 
 document.getElementById('applyJsonBtn').addEventListener('click', () => {
   const rawInput = document.getElementById('jsonInput').value.trim();
-  if (!rawInput) {
-    ocrStatus.textContent = 'JSONを貼り付けてください';
-    ocrStatus.className = 'ocr-status error';
-    return;
-  }
+  if (!rawInput) { ocrStatus.textContent = 'JSONを貼り付けてください'; ocrStatus.className = 'ocr-status error'; return; }
   try {
     let cleaned = normalizeText(rawInput).replace(/```json|```/g, '').trim();
     const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
@@ -677,26 +661,15 @@ const apikeyPanel = document.getElementById('apikeyPanel');
 const apikeyStatusPanel = document.getElementById('apikeyStatusPanel');
 const apikeyInput = document.getElementById('apikeyInput');
 
-function showApikeyPanel() {
-  apikeyPanel.style.display = 'block';
-  apikeyStatusPanel.style.display = 'none';
-}
-function hideApikeyPanel() {
-  apikeyPanel.style.display = 'none';
-  apikeyStatusPanel.style.display = 'block';
-}
+function showApikeyPanel() { apikeyPanel.style.display = 'block'; apikeyStatusPanel.style.display = 'none'; }
+function hideApikeyPanel() { apikeyPanel.style.display = 'none'; apikeyStatusPanel.style.display = 'block'; }
 function checkApikey() {
   const key = localStorage.getItem('gemini_api_key');
-  if (key && key.startsWith('AIza')) hideApikeyPanel();
-  else showApikeyPanel();
+  if (key && key.startsWith('AIza')) hideApikeyPanel(); else showApikeyPanel();
 }
 document.getElementById('saveApikeyBtn').addEventListener('click', () => {
   const v = apikeyInput.value.trim();
-  if (!v.startsWith('AIza')) {
-    ocrStatus.textContent = '✗ 無効なキー';
-    ocrStatus.className = 'ocr-status error';
-    return;
-  }
+  if (!v.startsWith('AIza')) { ocrStatus.textContent = '✗ 無効なキー'; ocrStatus.className = 'ocr-status error'; return; }
   localStorage.setItem('gemini_api_key', v);
   hideApikeyPanel();
   ocrStatus.textContent = '✓ 保存しました';
