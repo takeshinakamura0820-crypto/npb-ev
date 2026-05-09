@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NPB EV ダッシュボード v7 (Gemini)</title>
+<title>NPB EV ダッシュボード v7.1 (Gemini)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
@@ -23,7 +23,6 @@
     min-height: 100vh; padding: 16px 10px 40px;
   }
   .container { max-width: 100%; margin: 0 auto; }
-
   header {
     border-top: 3px double var(--ink); border-bottom: 3px double var(--ink);
     padding: 12px 0; margin-bottom: 16px; text-align: center;
@@ -31,14 +30,12 @@
   h1 { font-size: clamp(20px, 5vw, 28px); font-weight: 800; letter-spacing: 0.04em; }
   h1 .accent { color: var(--crimson); font-style: italic; }
   .subtitle { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--grey); margin-top: 4px; }
-
   .upload-panel {
     background: var(--paper-2); border: 2px dashed var(--ink);
     padding: 14px; margin-bottom: 16px; text-align: center;
   }
   .upload-panel.has-image { border-style: solid; }
   .upload-panel h3 { font-size: 13px; margin-bottom: 8px; letter-spacing: 0.08em; }
-  .upload-hint { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
   .file-btn {
     display: inline-block; padding: 8px 16px; background: var(--ink); color: var(--paper);
     font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
@@ -48,26 +45,18 @@
   .file-btn.green { background: var(--green); }
   .file-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   #imgInput { display: none; }
-  .img-preview {
-    max-width: 100%; max-height: 300px; margin-top: 10px;
-    border: 1.5px solid var(--ink); display: none;
-  }
+  .img-preview { max-width: 100%; max-height: 300px; margin-top: 10px; border: 1.5px solid var(--ink); display: none; }
   .img-preview.visible { display: inline-block; }
-  .ocr-status {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    margin-top: 8px; padding: 6px; min-height: 24px;
-  }
+  .ocr-status { font-family: 'JetBrains Mono', monospace; font-size: 10px; margin-top: 8px; padding: 6px; min-height: 24px; }
   .ocr-status.loading { background: var(--gold); }
   .ocr-status.success { background: var(--green); color: var(--paper); }
   .ocr-status.error { background: var(--crimson-dark); color: var(--paper); }
-
   .game-card {
     background: var(--paper-2); border: 1.5px solid var(--ink);
     padding: 12px 12px 14px; margin-bottom: 14px; position: relative;
   }
   .game-card.fav-away { border-left: 5px solid var(--crimson); }
   .game-card.fav-home { border-left: 5px solid var(--indigo); }
-
   .matchup { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
   .team-row {
     display: flex; justify-content: space-between; align-items: center;
@@ -85,10 +74,7 @@
   .team-tag { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--grey); letter-spacing: 0.1em; }
   .team-fav-mark { background: var(--gold); color: var(--ink); font-size: 8px; padding: 1px 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
   .odds-trio { display: flex; gap: 4px; font-family: 'JetBrains Mono', monospace; }
-  .odd-cell {
-    background: var(--paper); padding: 3px 4px; border: 1px solid var(--grey-light);
-    text-align: center; min-width: 56px;
-  }
+  .odd-cell { background: var(--paper); padding: 3px 4px; border: 1px solid var(--grey-light); text-align: center; min-width: 56px; }
   .odd-cell .lbl { font-size: 8px; color: var(--grey); display: block; }
   .odd-cell input.odd-input {
     width: 50px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
@@ -96,21 +82,13 @@
     padding: 0; color: var(--ink);
   }
   .odd-cell input.odd-input:focus { outline: 1px solid var(--crimson); }
-
-  .game-meta {
-    font-family: 'JetBrains Mono', monospace; font-size: 9px;
-    color: var(--grey); letter-spacing: 0.1em; margin-bottom: 8px;
-  }
-  .game-meta .strong-tag {
-    background: var(--ink); color: var(--paper); padding: 2px 6px; margin-right: 6px;
-  }
-
+  .game-meta { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--grey); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .game-meta .strong-tag { background: var(--ink); color: var(--paper); padding: 2px 6px; margin-right: 6px; }
   .slider-wrap { background: var(--paper); border: 1.5px solid var(--ink); padding: 8px 10px; margin: 8px 0; }
   .slider-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .slider-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; color: var(--grey); }
   .slider-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: var(--crimson); }
   .slider-row input[type="range"] { width: 100%; accent-color: var(--crimson); }
-
   .ev-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
   .ev-cell { background: var(--paper); border: 1.5px solid var(--ink); padding: 8px 10px; text-align: center; }
   .ev-cell.recommend { border-color: var(--green); border-width: 3px; background: rgba(45,106,58,0.08); }
@@ -119,18 +97,10 @@
   .ev-val { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; }
   .ev-val.pos { color: var(--green); } .ev-val.neg { color: var(--crimson-dark); }
   .ev-pct { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-
-  .verdict {
-    margin-top: 8px; padding: 6px 10px; background: var(--ink); color: var(--paper);
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-align: center;
-  }
+  .verdict { margin-top: 8px; padding: 6px 10px; background: var(--ink); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-align: center; }
   .verdict.good { background: var(--green); }
   .verdict.bad { background: var(--crimson-dark); }
-
-  .probs-mini {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px;
-    font-family: 'JetBrains Mono', monospace; font-size: 9px;
-  }
+  .probs-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; }
   .probs-mini > div { background: var(--paper); border: 1px solid var(--grey-light); padding: 4px; text-align: center; }
   .probs-mini .lab { color: var(--grey); font-size: 8px; }
   .probs-mini .val { font-weight: 700; font-size: 11px; }
@@ -138,15 +108,8 @@
   .probs-mini .f1 { border-left: 3px solid var(--crimson); }
   .probs-mini .t { border-left: 3px solid var(--gold); }
   .probs-mini .d { border-left: 3px solid var(--indigo); }
-
   .actions { text-align: center; margin: 14px 0; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-
-  footer {
-    margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--grey-light);
-    font-size: 9px; font-family: 'JetBrains Mono', monospace;
-    color: var(--grey); text-align: center; letter-spacing: 0.1em;
-  }
-
+  footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--grey-light); font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--grey); text-align: center; letter-spacing: 0.1em; }
   @media (max-width: 380px) {
     body { padding: 12px 6px 30px; }
     .game-card { padding: 10px 8px; }
@@ -161,17 +124,16 @@
 <div class="container">
   <header>
     <h1>NPB EV <span class="accent">ダッシュボード</span></h1>
-    <div class="subtitle">Gemini API版 ・ 画像→JSON自動抽出 ・ A社→B社EV</div>
+    <div class="subtitle">Gemini API版 v7.1 ・ thinking無効化</div>
   </header>
 
   <div id="apikeyPanel" style="background:#fff7d6;border:2px solid var(--gold);padding:12px;margin-bottom:14px;display:none;">
     <h3 style="font-size:13px;margin-bottom:6px;">🔑 Gemini API キーの設定(初回のみ)</h3>
     <div style="font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace;line-height:1.6;margin-bottom:8px;">
       ① <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--crimson);">https://aistudio.google.com/app/apikey</a> を開く<br>
-      ② Googleアカウントでログイン → 「Create API Key」をタップ<br>
-      ③ 出てきたキー(AIzaSy...)をコピー<br>
-      ④ 下に貼付して「保存」<br>
-      <span style="color:var(--green);">※完全無料・クレカ不要</span>
+      ② Googleでログイン → 「Create API Key」<br>
+      ③ AIzaSy... をコピー<br>
+      ④ 下に貼付して「保存」
     </div>
     <input type="text" id="apikeyInput" placeholder="AIzaSy..." autocorrect="off" autocapitalize="off" spellcheck="false"
       style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px;border:1.5px solid var(--ink);">
@@ -187,55 +149,25 @@
   </div>
 
   <div class="upload-panel" id="uploadPanel">
-    <h3>📋 オッズデータ更新</h3>
-
-    <div style="background:var(--paper);border:1.5px solid var(--ink);padding:10px;margin-bottom:10px;text-align:left;">
-      <div style="font-size:11px;font-weight:700;margin-bottom:6px;">手順(確実な方法):</div>
-      <ol style="font-size:10px;padding-left:20px;line-height:1.6;color:var(--ink);">
-        <li>下の<b>「プロンプトをコピー」</b>を押す</li>
-        <li>別タブで <b>claude.ai</b> を開き、オッズ画像を添付</li>
-        <li>コピーしたプロンプトを Claude に貼り付けて送信</li>
-        <li>Claude が出力した JSON を <b>下のエリアに貼付</b> → 「JSONから更新」</li>
-      </ol>
-    </div>
-
-    <div style="background:var(--paper);border:1.5px solid var(--ink);padding:8px;margin-bottom:10px;text-align:left;">
-      <div style="font-size:10px;font-weight:700;margin-bottom:4px;">📋 Claude へのプロンプト</div>
-      <textarea readonly id="claudePrompt"
-        autocorrect="off" autocapitalize="off" spellcheck="false"
-        style="width:100%;height:90px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px;border:1px solid var(--ink);background:var(--paper-2);">この画像はNPB(日本プロ野球)の試合のブックメーカーオッズです。各試合データをJSON配列のみで返してください(プリアンブル不要、JSON配列のみ、引用符は半角ASCIIの " のみ使用)。
-
-[{"time":"14:00","away":"アウェイチーム名","awayOdds":勝敗オッズ,"awayHcap":{"sign":1または-1,"odds":±1.5のオッズ},"home":"ホームチーム名","homeOdds":勝敗オッズ,"homeHcap":{"sign":1または-1,"odds":±1.5のオッズ}}, ...]
-
-ルール: 各試合は2行構成で上=アウェイ、下=ホーム。1列目=勝敗、2列目=±1.5ハンデ、3列目(O/U)無視。-1.5ならsign:-1、+1.5ならsign:1</textarea>
-      <button class="file-btn" id="copyPromptBtn" style="margin-top:4px;">プロンプトをコピー</button>
-    </div>
-
-    <div style="background:var(--paper);border:2px solid var(--green);padding:10px;margin-bottom:10px;text-align:left;">
-      <div style="font-size:11px;font-weight:800;margin-bottom:4px;color:var(--green);">📥 ここにJSONを貼付</div>
-      <textarea id="jsonInput"
-        autocorrect="off" autocapitalize="off" spellcheck="false"
-        placeholder='[ { "time":"14:00", "away":"...", "awayOdds":2.91, "awayHcap":{"sign":1,"odds":1.917}, "home":"...", "homeOdds":1.45, "homeHcap":{"sign":-1,"odds":1.952} }, ... ]'
-        style="width:100%;height:100px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;border:1.5px solid var(--ink);"></textarea>
-      <button class="file-btn green" id="applyJsonBtn" style="margin-top:6px;font-size:13px;padding:10px 20px;">JSONから更新</button>
-      <button class="file-btn" id="resetBtn" style="margin-top:6px;">サンプルに戻す</button>
-    </div>
-
+    <h3>📸 画像から自動更新</h3>
+    <input type="file" id="imgInput" accept="image/*">
+    <label for="imgInput" class="file-btn">画像を選択</label>
+    <button class="file-btn action" id="ocrBtn" disabled>画像から自動更新</button>
+    <button class="file-btn green" id="resetBtn">サンプルに戻す</button>
+    <img class="img-preview" id="imgPreview" alt="preview">
     <div class="ocr-status" id="ocrStatus"></div>
 
     <details style="margin-top:10px;text-align:left;">
-      <summary style="cursor:pointer;font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace;">
-        ⚙️ 試験機能 / 詳細ログ
-      </summary>
-      <div style="margin-top:8px;padding:8px;background:var(--paper);border:1px dashed var(--grey);">
-        <div style="font-size:10px;font-weight:700;margin-bottom:4px;">📸 画像から直接更新(Gemini API)</div>
-        <input type="file" id="imgInput" accept="image/*">
-        <label for="imgInput" class="file-btn">画像を選択</label>
-        <button class="file-btn action" id="ocrBtn" disabled>画像から自動更新</button>
-        <img class="img-preview" id="imgPreview" alt="preview">
+      <summary style="cursor:pointer;font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace;">⚙️ 詳細ログ / 手動JSON貼付</summary>
+      <div style="margin-top:8px;">
+        <div style="font-size:10px;font-weight:700;margin-bottom:4px;">📥 手動でJSON貼付:</div>
+        <textarea id="jsonInput" autocorrect="off" autocapitalize="off" spellcheck="false"
+          placeholder='[ { "time":"14:00", "away":"...", ... } ]'
+          style="width:100%;height:80px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px;border:1px solid var(--ink);"></textarea>
+        <button class="file-btn" id="applyJsonBtn">JSONから更新</button>
       </div>
       <div style="margin-top:8px;">
-        <div style="font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace;margin-bottom:4px;">APIレスポンス(デバッグ):</div>
+        <div style="font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace;margin-bottom:4px;">APIレスポンス:</div>
         <pre id="debugLog" style="max-height:300px;overflow:auto;font-size:9px;background:var(--ink);color:var(--paper);padding:6px;font-family:'JetBrains Mono',monospace;white-space:pre-wrap;"></pre>
       </div>
     </details>
@@ -247,9 +179,7 @@
 
   <div id="games"></div>
 
-  <footer>
-    v7 ・ Gemini 2.5 Flash API ・ ロジック準拠: v17
-  </footer>
+  <footer>v7.1 ・ Gemini 2.5 Flash (thinking無効化) ・ ロジック準拠: v17</footer>
 </div>
 
 <script>
@@ -324,7 +254,6 @@ function estimateProbs(O_fav, O_dog, O_hfav, O_hdog, favIsHome) {
   const K_EXT = 0.7;
   const ext_F1_share = favIsHome ? 0.97 : 0.65;
   const p_yes_clip = Math.min(p_yes_naked, p_fav_ext * (1-p_draw) * 0.99);
-
   let F23 = 0, F1 = 0, D = 0, fav_ext_winrate = 0.5;
   for (let i = 0; i < 30; i++) {
     const ext_fav_decide = decideRate * fav_ext_winrate;
@@ -349,9 +278,8 @@ function estimateProbs(O_fav, O_dog, O_hfav, O_hdog, favIsHome) {
 
 function calcEV(probs, hkey) {
   const h = HANDICAPS[hkey];
-  const scens = ['F3', 'F2', 'F1', 'T', 'D'];
   let evFav = 0, evDog = 0;
-  for (const sc of scens) {
+  for (const sc of ['F3','F2','F1','T','D']) {
     evFav += probs[sc] * payoutFor(h, sc, 'fav');
     evDog += probs[sc] * payoutFor(h, sc, 'dog');
   }
@@ -379,9 +307,7 @@ function fillGameCard(idx) {
   if (!card) return;
   const game = GAMES[idx];
   const favIsHome = game.homeOdds < game.awayOdds;
-  const haClass = favIsHome ? 'fav-home' : 'fav-away';
-  card.className = `game-card ${haClass}`;
-
+  card.className = `game-card ${favIsHome ? 'fav-home' : 'fav-away'}`;
   const favName = favIsHome ? game.home : game.away;
   const haLabel = favIsHome ? 'ホーム' : 'アウェイ';
 
@@ -397,14 +323,8 @@ function fillGameCard(idx) {
           ${!favIsHome ? '<span class="team-fav-mark">FAV</span>' : ''}
         </div>
         <div class="odds-trio">
-          <div class="odd-cell">
-            <span class="lbl">勝敗</span>
-            <input class="odd-input" type="number" step="0.001" value="${game.awayOdds}" data-idx="${idx}" data-field="awayOdds" />
-          </div>
-          <div class="odd-cell">
-            <span class="lbl">${game.awayHcap.sign>0?'+':''}1.5</span>
-            <input class="odd-input" type="number" step="0.001" value="${game.awayHcap.odds}" data-idx="${idx}" data-field="awayHcapOdds" />
-          </div>
+          <div class="odd-cell"><span class="lbl">勝敗</span><input class="odd-input" type="number" step="0.001" value="${game.awayOdds}" data-idx="${idx}" data-field="awayOdds" /></div>
+          <div class="odd-cell"><span class="lbl">${game.awayHcap.sign>0?'+':''}1.5</span><input class="odd-input" type="number" step="0.001" value="${game.awayHcap.odds}" data-idx="${idx}" data-field="awayHcapOdds" /></div>
         </div>
       </div>
       <div class="team-row home">
@@ -414,22 +334,14 @@ function fillGameCard(idx) {
           ${favIsHome ? '<span class="team-fav-mark">FAV</span>' : ''}
         </div>
         <div class="odds-trio">
-          <div class="odd-cell">
-            <span class="lbl">勝敗</span>
-            <input class="odd-input" type="number" step="0.001" value="${game.homeOdds}" data-idx="${idx}" data-field="homeOdds" />
-          </div>
-          <div class="odd-cell">
-            <span class="lbl">${game.homeHcap.sign>0?'+':''}1.5</span>
-            <input class="odd-input" type="number" step="0.001" value="${game.homeHcap.odds}" data-idx="${idx}" data-field="homeHcapOdds" />
-          </div>
+          <div class="odd-cell"><span class="lbl">勝敗</span><input class="odd-input" type="number" step="0.001" value="${game.homeOdds}" data-idx="${idx}" data-field="homeOdds" /></div>
+          <div class="odd-cell"><span class="lbl">${game.homeHcap.sign>0?'+':''}1.5</span><input class="odd-input" type="number" step="0.001" value="${game.homeHcap.odds}" data-idx="${idx}" data-field="homeHcapOdds" /></div>
         </div>
       </div>
     </div>
     <div class="game-meta">
-      <span class="strong-tag">強い側 = ${escapeHtml(favName)} (${haLabel})</span>
-      ${game.time}
+      <span class="strong-tag">強い側 = ${escapeHtml(favName)} (${haLabel})</span>${game.time}
     </div>
-
     <div class="slider-wrap">
       <div class="slider-row">
         <span class="slider-label">B社ハンデ</span>
@@ -437,14 +349,12 @@ function fillGameCard(idx) {
       </div>
       <input type="range" id="hcap-slider-${idx}" min="0" max="${HANDICAP_KEYS.length-1}" value="15" step="1">
     </div>
-
     <div class="probs-mini">
       <div class="f23"><div class="lab">F23</div><div class="val" id="p-f23-${idx}">―</div></div>
       <div class="f1"><div class="lab">F1</div><div class="val" id="p-f1-${idx}">―</div></div>
       <div class="t"><div class="lab">T</div><div class="val" id="p-t-${idx}">―</div></div>
       <div class="d"><div class="lab">D</div><div class="val" id="p-d-${idx}">―</div></div>
     </div>
-
     <div class="ev-pair">
       <div class="ev-cell" id="ev-fav-cell-${idx}">
         <div class="ev-side">出す側 (${escapeHtml(favName)})</div>
@@ -457,7 +367,6 @@ function fillGameCard(idx) {
         <div class="ev-pct" id="ev-dog-pct-${idx}">―%</div>
       </div>
     </div>
-
     <div class="verdict" id="verdict-${idx}">―</div>
   `;
 
@@ -482,24 +391,18 @@ function fillGameCard(idx) {
     slider.value = suggestInitialHcap(O_fav);
     sliderState[idx] = slider.value;
   }
-  slider.addEventListener('input', () => {
-    sliderState[idx] = slider.value;
-    updateEV(idx);
-  });
-
+  slider.addEventListener('input', () => { sliderState[idx] = slider.value; updateEV(idx); });
   updateEV(idx);
 }
 
 function updateEV(idx) {
   const game = GAMES[idx];
   if (!game.awayOdds || !game.homeOdds || !game.awayHcap.odds || !game.homeHcap.odds) return;
-
   const favIsHome = game.homeOdds < game.awayOdds;
   const O_fav = favIsHome ? game.homeOdds : game.awayOdds;
   const O_dog = favIsHome ? game.awayOdds : game.homeOdds;
   const O_hfav = favIsHome ? game.homeHcap.odds : game.awayHcap.odds;
   const O_hdog = favIsHome ? game.awayHcap.odds : game.homeHcap.odds;
-
   const probs = estimateProbs(O_fav, O_dog, O_hfav, O_hdog, favIsHome);
 
   document.getElementById(`p-f23-${idx}`).textContent = (probs.F23*100).toFixed(1) + '%';
@@ -600,23 +503,17 @@ function loadImage(file) {
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
       imgPreview.src = jpegDataUrl;
       imgPreview.classList.add('visible');
       uploadPanel.classList.add('has-image');
-
       const m = jpegDataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if (m) {
         currentImageMediaType = m[1];
         currentImageBase64 = m[2];
         ocrBtn.disabled = false;
-        ocrStatus.textContent = `画像を読み込みました(${w}×${h}, ${(currentImageBase64.length*0.75/1024).toFixed(0)}KB)`;
+        ocrStatus.textContent = `画像読み込み完了(${w}×${h}, ${(currentImageBase64.length*0.75/1024).toFixed(0)}KB)`;
         ocrStatus.className = 'ocr-status';
       }
-    };
-    img.onerror = () => {
-      ocrStatus.textContent = '画像の読み込みに失敗しました';
-      ocrStatus.className = 'ocr-status error';
     };
     img.src = dataUrl;
   };
@@ -655,13 +552,12 @@ function normalizeText(text) {
 }
 
 function applyGames(newGames, sourceLabel='') {
-  if (!Array.isArray(newGames)) throw new Error('配列ではありません');
+  if (!Array.isArray(newGames)) throw new Error('配列ではない');
   if (newGames.length === 0) throw new Error('試合データが空');
   for (const g of newGames) {
-    if (!g.away || !g.home) throw new Error('チーム名が欠落');
-    if (!g.awayOdds || !g.homeOdds) throw new Error('オッズが欠落');
-    if (!g.awayHcap || !g.homeHcap) throw new Error('ハンデオッズが欠落');
-    if (typeof g.awayHcap !== 'object' || typeof g.homeHcap !== 'object') throw new Error('Hcap形式エラー');
+    if (!g.away || !g.home) throw new Error('チーム名欠落');
+    if (!g.awayOdds || !g.homeOdds) throw new Error('オッズ欠落');
+    if (!g.awayHcap || !g.homeHcap) throw new Error('Hcap欠落');
     if (!g.time) g.time = '14:00';
   }
   GAMES = newGames;
@@ -675,13 +571,13 @@ ocrBtn.addEventListener('click', async () => {
   if (!currentImageBase64) return;
   const apiKey = localStorage.getItem('gemini_api_key');
   if (!apiKey) {
-    ocrStatus.textContent = '✗ API キーが未設定です';
+    ocrStatus.textContent = '✗ API キーが未設定';
     ocrStatus.className = 'ocr-status error';
     showApikeyPanel();
     return;
   }
   ocrBtn.disabled = true;
-  ocrStatus.textContent = '解析中... (3-10秒程度)';
+  ocrStatus.textContent = '解析中... (3-5秒)';
   ocrStatus.className = 'ocr-status loading';
   const debugLog = document.getElementById('debugLog');
   debugLog.textContent = '';
@@ -690,14 +586,19 @@ ocrBtn.addEventListener('click', async () => {
     const requestBody = {
       contents: [{
         parts: [
-          { text: 'この画像はNPB(日本プロ野球)の試合のブックメーカーオッズです。各試合のデータをJSON配列のみで返してください。\n\n形式:\n[{"time":"14:00","away":"アウェイチーム名","awayOdds":勝敗オッズ,"awayHcap":{"sign":1または-1,"odds":±1.5のオッズ},"home":"ホームチーム名","homeOdds":勝敗オッズ,"homeHcap":{"sign":1または-1,"odds":±1.5のオッズ}}]\n\nルール: 各試合は2行構成、上=アウェイ、下=ホーム。1列目=勝敗、2列目=±1.5ハンデ、3列目(O/U)無視。-1.5ならsign:-1、+1.5ならsign:1。JSONのみ、説明文不要。' },
+          { text: 'この画像はNPB(日本プロ野球)の試合のブックメーカーオッズです。各試合のデータをJSON配列のみで返してください。\n\n形式:\n[{"time":"14:00","away":"アウェイチーム名","awayOdds":勝敗オッズ,"awayHcap":{"sign":1または-1,"odds":±1.5のオッズ},"home":"ホームチーム名","homeOdds":勝敗オッズ,"homeHcap":{"sign":1または-1,"odds":±1.5のオッズ}}]\n\nルール: 各試合は2行構成、上=アウェイ、下=ホーム。1列目=勝敗、2列目=±1.5ハンデ、3列目(O/U)無視。-1.5ならsign:-1、+1.5ならsign:1。チーム名は短縮形(千葉ロッテ/読売巨人/北海道日本ハム/東京ヤクルト/横浜DeNA/東北楽天/広島/中日/阪神/福岡ソフトバンク/オリックス/埼玉西武)。JSONのみ、説明文不要。' },
           { inline_data: { mime_type: currentImageMediaType, data: currentImageBase64 } }
         ]
       }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 2000, responseMimeType: "application/json" }
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 8000,
+        responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     };
 
-    debugLog.textContent = `[Request] media_type=${currentImageMediaType}, base64=${currentImageBase64.length}文字\n[Model] gemini-2.5-flash\n\n`;
+    debugLog.textContent = `[Model] gemini-2.5-flash (thinking無効)\n[base64] ${currentImageBase64.length}文字\n\n`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
@@ -705,10 +606,9 @@ ocrBtn.addEventListener('click', async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody)
     });
-    debugLog.textContent += `[HTTP] ${response.status} ${response.statusText}\n`;
-
+    debugLog.textContent += `[HTTP] ${response.status}\n`;
     const responseText = await response.text();
-    debugLog.textContent += `[Raw response (${responseText.length}文字)]\n${responseText.slice(0, 2000)}\n`;
+    debugLog.textContent += `[Raw]\n${responseText.slice(0, 2000)}\n`;
 
     if (!response.ok) {
       let errMsg = `Gemini APIエラー ${response.status}`;
@@ -720,22 +620,18 @@ ocrBtn.addEventListener('click', async () => {
     }
 
     const data = JSON.parse(responseText);
-    if (!data.candidates || !Array.isArray(data.candidates) || !data.candidates[0]) {
-      throw new Error(`candidatesが空: ${JSON.stringify(data.promptFeedback||{}).slice(0,200)}`);
-    }
+    if (!data.candidates || !data.candidates[0]) throw new Error('candidatesが空');
     const cand = data.candidates[0];
     let text = '';
     for (const part of (cand.content?.parts || [])) {
       if (part.text) text += part.text;
     }
     if (!text.trim()) throw new Error('text content が空');
-
-    debugLog.textContent += `\n[Extracted text]\n${text.slice(0, 1500)}\n`;
+    debugLog.textContent += `\n[Text]\n${text.slice(0, 1500)}\n`;
 
     text = normalizeText(text.replace(/```json|```/g, '').trim());
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('JSON配列が見つかりません');
-
+    if (!jsonMatch) throw new Error('JSON配列が見つからない');
     const newGames = JSON.parse(jsonMatch[0]);
     applyGames(newGames, 'OCR');
   } catch (err) {
@@ -757,12 +653,10 @@ document.getElementById('applyJsonBtn').addEventListener('click', () => {
     return;
   }
   try {
-    let cleaned = normalizeText(rawInput);
-    cleaned = cleaned.replace(/```json|```/g, '').trim();
+    let cleaned = normalizeText(rawInput).replace(/```json|```/g, '').trim();
     const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('JSON配列が見つかりません');
-    const newGames = JSON.parse(jsonMatch[0]);
-    applyGames(newGames, '手動JSON');
+    if (!jsonMatch) throw new Error('JSON配列が見つからない');
+    applyGames(JSON.parse(jsonMatch[0]), '手動');
   } catch (err) {
     ocrStatus.textContent = `✗ JSON解析エラー: ${err.message}`;
     ocrStatus.className = 'ocr-status error';
@@ -773,26 +667,11 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   GAMES = JSON.parse(JSON.stringify(DEFAULT_GAMES));
   Object.keys(sliderState).forEach(k => delete sliderState[k]);
   redrawAll();
-  ocrStatus.textContent = 'サンプルデータに戻しました';
+  ocrStatus.textContent = 'サンプルに戻しました';
   ocrStatus.className = 'ocr-status';
 });
 
 document.getElementById('addGameBtn').addEventListener('click', addGame);
-
-document.getElementById('copyPromptBtn').addEventListener('click', async () => {
-  const txt = document.getElementById('claudePrompt').value;
-  try {
-    await navigator.clipboard.writeText(txt);
-    ocrStatus.textContent = '✓ プロンプトをコピーしました';
-    ocrStatus.className = 'ocr-status success';
-  } catch (e) {
-    const ta = document.getElementById('claudePrompt');
-    ta.select();
-    document.execCommand('copy');
-    ocrStatus.textContent = '✓ プロンプトを選択しました';
-    ocrStatus.className = 'ocr-status';
-  }
-});
 
 const apikeyPanel = document.getElementById('apikeyPanel');
 const apikeyStatusPanel = document.getElementById('apikeyStatusPanel');
@@ -814,23 +693,22 @@ function checkApikey() {
 document.getElementById('saveApikeyBtn').addEventListener('click', () => {
   const v = apikeyInput.value.trim();
   if (!v.startsWith('AIza')) {
-    ocrStatus.textContent = '✗ 無効なキー(AIzaSy...で始まるはず)';
+    ocrStatus.textContent = '✗ 無効なキー';
     ocrStatus.className = 'ocr-status error';
     return;
   }
   localStorage.setItem('gemini_api_key', v);
   hideApikeyPanel();
-  ocrStatus.textContent = '✓ APIキーを保存しました';
+  ocrStatus.textContent = '✓ 保存しました';
   ocrStatus.className = 'ocr-status success';
 });
 document.getElementById('clearApikeyBtn').addEventListener('click', () => {
-  if (!confirm('APIキーを削除しますか?')) return;
+  if (!confirm('APIキー削除?')) return;
   localStorage.removeItem('gemini_api_key');
   apikeyInput.value = '';
   showApikeyPanel();
 });
 checkApikey();
-
 redrawAll();
 </script>
 </body>
