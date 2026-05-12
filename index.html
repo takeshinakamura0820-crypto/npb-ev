@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NPB EV ダッシュボード v7.3</title>
+<title>NPB EV ダッシュボード v8.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
@@ -99,7 +99,7 @@
 <div class="container">
   <header>
     <h1>NPB EV <span class="accent">ダッシュボード</span></h1>
-    <div class="subtitle">v7.3 ・ β=0.75 fave-longshot bias 補正</div>
+    <div class="subtitle">v8.1 ・ p_T = 0.03 + 0.10×cf⁴</div>
   </header>
 
   <div id="apikeyPanel" style="background:#fff7d6;border:2px solid var(--gold);padding:12px;margin-bottom:14px;display:none;">
@@ -145,7 +145,7 @@
 
   <div class="actions"><button class="file-btn" id="addGameBtn">+ 試合追加</button></div>
   <div id="games"></div>
-  <footer>v7.3 ・ β=0.75 補正 ・ Gemini 2.5 Flash ・ ロジック準拠: v17+β</footer>
+  <footer>v8.1 ・ p_T = 0.03 + 0.10×cf⁴ ・ Gemini 2.5 Flash ・ ロジック準拠: v17+cf⁴</footer>
 </div>
 
 <script>
@@ -205,12 +205,10 @@ function payoutFor(h, scenario, side) {
 
 function estimateProbs(O_fav, O_dog, O_hfav, O_hdog, favIsHome) {
   const p_fav_ext = (1/O_fav) / (1/O_fav + 1/O_dog);
-  // β補正: A社のハンデ1.5オッズに含まれる fave-longshot bias を修正
-  const BETA_F23 = 0.75;
-  const p_yes_naked_raw = (1/O_hfav) / (1/O_hfav + 1/O_hdog);
-  const p_yes_naked = p_yes_naked_raw * BETA_F23;
+  const p_yes_naked = (1/O_hfav) / (1/O_hfav + 1/O_hdog);
   const cf = 2 * Math.min(p_fav_ext, 1 - p_fav_ext);
-  const p_T = Math.max(0.03, Math.min(0.13, 0.03 + 0.10 * cf * cf));
+  // p_T = 0.03 + 0.10 × cf⁴  (互角試合13%は維持、中間〜大差を急峻に下げる)
+  const p_T = Math.max(0.03, Math.min(0.13, 0.03 + 0.10 * cf * cf * cf * cf));
   const Q_DRAW = 0.28;
   const p_draw = p_T * Q_DRAW;
   const decideRate = p_T - p_draw;
