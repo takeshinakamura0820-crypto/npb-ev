@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0f0d0a"/>
+  <rect x="24" y="24" width="464" height="464" fill="none" stroke="#c4a24a" stroke-width="4"/>
+  <text x="256" y="240" text-anchor="middle" font-family="Georgia, serif" font-size="150" font-weight="800" fill="#b8202b" font-style="italic">EV</text>
+  <text x="256" y="340" text-anchor="middle" font-family="monospace" font-size="60" font-weight="700" fill="#f5efe1" letter-spacing="8">NPB</text>
+  <text x="256" y="420" text-anchor="middle" font-family="monospace" font-size="32" font-weight="500" fill="#c4a24a" letter-spacing="4">SINGLE</text>
+</svg>
