@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NPB EV 手入力</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NPB EV">
+<meta name="theme-color" content="#f5efe1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0d0a; --paper: #f5efe1; --paper-2: #ebe2cc;
+    --crimson: #b8202b; --crimson-dark: #7a1018;
+    --gold: #c4a24a; --indigo: #1a2940; --green: #2d6a3a;
+    --grey: #6b6657; --grey-light: #c8bfa9; --purple: #6b2d6a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: 'Shippori Mincho', serif; overflow-x: hidden; }
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184,32,43,0.06), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(26,41,64,0.05), transparent 40%);
+    min-height: 100vh;
+    padding: max(16px, env(safe-area-inset-top)) 10px max(40px, env(safe-area-inset-bottom));
+  }
+  .container { max-width: 100%; margin: 0 auto; }
+  header { border-top: 3px double var(--ink); border-bottom: 3px double var(--ink); padding: 10px 0; margin-bottom: 12px; text-align: center; }
+  h1 { font-size: clamp(18px, 5vw, 22px); font-weight: 800; letter-spacing: 0.04em; }
+  h1 .accent { color: var(--crimson); font-style: italic; }
+  .subtitle { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: var(--grey); margin-top: 3px; }
+  .back-link { display: inline-block; margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--indigo); text-decoration: none; letter-spacing: 0.1em; }
+  .file-btn {
+    display: inline-block; padding: 8px 18px; background: var(--ink); color: var(--paper);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
+    cursor: pointer; border: none; margin: 4px;
+  }
+  .file-btn.action { background: var(--crimson); font-size: 13px; padding: 10px 24px; }
+  .file-btn.green { background: var(--green); }
+  .file-btn.small { font-size: 9px; padding: 4px 10px; }
+  .game-card { background: var(--paper-2); border: 1.5px solid var(--ink); padding: 10px; margin-bottom: 12px; }
+  .game-card.fav-away { border-left: 5px solid var(--crimson); }
+  .game-card.fav-home { border-left: 5px solid var(--indigo); }
+  .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--grey-light); }
+  .game-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; background: var(--ink); color: var(--paper); padding: 3px 8px; letter-spacing: 0.1em; }
+  .col-head { display: grid; grid-template-columns: 70px 1fr 1fr; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--grey); letter-spacing: 0.1em; margin-bottom: 3px; padding: 0 4px; }
+  .col-head > div { text-align: center; }
+  .row { display: grid; grid-template-columns: 70px 1fr 1fr; gap: 4px; align-items: center; margin-bottom: 4px; }
+  .row-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--grey); letter-spacing: 0.1em; padding: 4px 6px; background: var(--paper); border: 1px solid var(--grey-light); text-align: center; }
+  .row.away .row-label { background: rgba(184,32,43,0.10); color: var(--crimson-dark); }
+  .row.home .row-label { background: rgba(26,41,64,0.10); color: var(--indigo); }
+  .row input.odd { padding: 7px; border: 1.5px solid var(--ink); background: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); width: 100%; text-align: center; font-weight: 600; }
+  .row input:focus { outline: 2px solid var(--crimson); }
+  .fav-selector { display: flex; gap: 4px; margin-top: 6px; }
+  .fav-selector label { flex: 1; text-align: center; padding: 5px; font-family: 'JetBrains Mono', monospace; font-size: 9px; border: 1.5px solid var(--ink); cursor: pointer; background: var(--paper); letter-spacing: 0.05em; }
+  .fav-selector input[type="radio"] { display: none; }
+  .fav-selector label.selected { background: var(--ink); color: var(--paper); }
+  .result { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--grey-light); }
+  .result.visible { display: block; }
+  .strong-tag { background: var(--ink); color: var(--paper); padding: 5px 10px; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.05em; text-align: center; }
+  .slider-wrap { background: var(--paper); border: 1.5px solid var(--ink); padding: 8px 10px; margin: 6px 0; }
+  .slider-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .slider-label { font-size: 9px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; color: var(--grey); }
+  .slider-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: var(--crimson); }
+  .slider-wrap input[type="range"] { width: 100%; accent-color: var(--crimson); }
+  .fair-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--grey-light); }
+  .fair-hint { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--grey); text-align: right; margin-top: 2px; }
+  .probs-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+  .probs-mini > div { background: var(--paper); border: 1px solid var(--grey-light); padding: 4px 3px; text-align: center; }
+  .probs-mini .lab { color: var(--grey); font-size: 8px; }
+  .probs-mini .val { font-weight: 700; font-size: 11px; }
+  .probs-mini .f23 { border-left: 3px solid var(--purple); }
+  .probs-mini .f1 { border-left: 3px solid var(--crimson); }
+  .probs-mini .t { border-left: 3px solid var(--gold); }
+  .probs-mini .d { border-left: 3px solid var(--indigo); }
+  .ev-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .ev-cell { background: var(--paper); border: 1.5px solid var(--ink); padding: 8px; text-align: center; }
+  .ev-cell.recommend { border-color: var(--green); border-width: 3px; background: rgba(45,106,58,0.08); }
+  .ev-cell.bad { background: rgba(184,32,43,0.04); }
+  .ev-side { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--grey); letter-spacing: 0.1em; margin-bottom: 2px; }
+  .ev-val { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 800; }
+  .ev-val.pos { color: var(--green); } .ev-val.neg { color: var(--crimson-dark); }
+  .ev-pct { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+  .verdict { margin-top: 6px; padding: 6px 10px; background: var(--ink); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-align: center; }
+  .verdict.good { background: var(--green); }
+  .verdict.bad { background: var(--crimson-dark); }
+  .err-msg { background: var(--crimson-dark); color: var(--paper); padding: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; margin: 6px 0; display: none; }
+  .err-msg.visible { display: block; }
+  .global-actions { position: sticky; bottom: 0; background: var(--paper); padding: 8px; margin: 0 -10px; border-top: 2px solid var(--ink); text-align: center; box-shadow: 0 -4px 8px rgba(0,0,0,0.06); }
+  footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grey-light); font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--grey); text-align: center; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>NPB EV <span class="accent">手入力</span></h1>
+    <div class="subtitle">最大6試合まで手入力でEV確認</div>
+    <a href="./" class="back-link">← 一覧版に戻る</a>
+  </header>
+  <div id="games"></div>
+  <div class="global-actions">
+    <button class="file-btn action" id="calcAllBtn">全試合まとめて計算</button>
+    <button class="file-btn" id="clearAllBtn">全部クリア</button>
+  </div>
+  <footer>手入力6試合版 v2.0 ・ ロジック v8.4 準拠</footer>
+</div>
+<script>
+const HANDICAPS = {
+  '0':{cat:'zero'},
+  '0.1':{cat:'small',frac:0.1},'0.2':{cat:'small',frac:0.2},'0.3':{cat:'small',frac:0.3},
+  '0.4':{cat:'small',frac:0.4},'0.5':{cat:'small',frac:0.5},'0.6':{cat:'small',frac:0.6},
+  '0.7':{cat:'small',frac:0.7},'0.8':{cat:'small',frac:0.8},'0.9':{cat:'small',frac:0.9},
+  '1.0':{cat:'one'},
+  '1.1':{cat:'midOne',frac:0.1},'1.2':{cat:'midOne',frac:0.2},'1.3':{cat:'midOne',frac:0.3},
+  '1.4':{cat:'midOne',frac:0.4},'1.5':{cat:'midOne',frac:0.5},'1.6':{cat:'midOne',frac:0.6},
+  '1.7':{cat:'midOne',frac:0.7},'1.8':{cat:'midOne',frac:0.8},'1.9':{cat:'midOne',frac:0.9},
+  '1半':{cat:'half'},
+  '1半1':{cat:'half_x',frac:0.1},'1半2':{cat:'half_x',frac:0.2},'1半3':{cat:'half_x',frac:0.3},
+  '1半4':{cat:'half_x',frac:0.4},'1半5':{cat:'half_x',frac:0.5},'1半6':{cat:'half_x',frac:0.6},
+  '1半7':{cat:'half_x',frac:0.7},'1半8':{cat:'half_x',frac:0.8},'1半9':{cat:'half_x',frac:0.9},
+  '2.0':{cat:'two'},
+};
+const POS_KEYS = Object.keys(HANDICAPS);
+const NEG_KEYS = POS_KEYS.filter(k => k !== '0').map(k => '-' + k).reverse();
+const HANDICAP_KEYS = [...NEG_KEYS, ...POS_KEYS];
+const ZERO_INDEX = HANDICAP_KEYS.indexOf('0');
+
+function payoutFor(h, sc, side) {
+  const W=+0.93, L=-0.97, NG=0;
+  const cat=h.cat, frac=h.frac||0;
+  switch(sc) {
+    case 'F3': return side==='fav' ? W : L;
+    case 'F2':
+      if (cat==='two')    return NG;
+      if (cat==='half_x') return side==='fav' ? +(1-frac)*0.93 : -(1-frac)*0.97;
+      return side==='fav' ? W : L;
+    case 'F1':
+      if (cat==='zero')   return side==='fav' ? W : L;
+      if (cat==='small')  return side==='fav' ? +(1-frac)*0.93 : -(1-frac)*0.97;
+      if (cat==='one')    return NG;
+      if (cat==='midOne') return side==='fav' ? -frac*0.97 : +frac*0.93;
+      return side==='fav' ? L : W;
+    case 'T':
+      if (cat==='zero')   return 0;
+      if (cat==='small')  return side==='fav' ? -frac*0.97 : +frac*0.93;
+      return side==='fav' ? L : W;
+    case 'D1': case 'D2': case 'D3':
+      return side==='fav' ? L : W;
+  }
+  return 0;
+}
+
+function estimateProbs(O_fav, O_dog, O_hfav, O_hdog, favIsHome) {
+  const p_fav_ext = (1/O_fav)/(1/O_fav+1/O_dog);
+  const p_yes_naked = (1/O_hfav)/(1/O_hfav+1/O_hdog);
+  const cf = 2*Math.min(p_fav_ext,1-p_fav_ext);
+  const p_T = Math.max(0.03, Math.min(0.13, 0.03+0.10*cf*cf*cf*cf));
+  const Q_DRAW=0.28, K_EXT=0.7;
+  const p_draw = p_T*Q_DRAW;
+  const decideRate = p_T-p_draw;
+  const ext_F1_share = favIsHome ? 0.97 : 0.65;
+  const p_yes_clip = Math.min(p_yes_naked, p_fav_ext*(1-p_draw)*0.99);
+  let F23=0, F1=0, D=0, fw=0.5;
+  for (let i=0;i<30;i++) {
+    const efd=decideRate*fw, edd=decideRate*(1-fw);
+    F23=Math.max(0.001, p_yes_clip-efd*(1-ext_F1_share));
+    F1 =Math.max(0.001, p_fav_ext*(1-p_draw)-p_yes_clip-efd*ext_F1_share);
+    D  =Math.max(0.001, (1-p_fav_ext)*(1-p_draw)-edd);
+    const t9=F23+F1+D;
+    const fr=t9>0 ? (F23+F1)/t9 : 0.5;
+    const nw=0.5+K_EXT*(fr-0.5);
+    if (Math.abs(nw-fw)<1e-7) break;
+    fw=nw;
+  }
+  const total=F23+F1+p_T+D, norm=1/total;
+  const F23_n=F23*norm, F1_n=F1*norm, T_n=p_T*norm, D_n=D*norm;
+  const bf3=0.55+0.4*(p_fav_ext-0.5);
+  const haa=favIsHome ? -0.10 : 0.05;
+  const f3r=Math.max(0.30, Math.min(0.85, bf3+haa));
+  const dogP=1-p_fav_ext;
+  const dogBf3=0.55+0.4*(dogP-0.5);
+  const dogHa=favIsHome ? 0.05 : -0.10;
+  const dogF3r=Math.max(0.30, Math.min(0.85, dogBf3+dogHa));
+  const fav2share=(F23_n+F1_n)>0 ? F23_n/(F23_n+F1_n) : 0.5;
+  const dog2share=fav2share*0.85;
+  const D23=D_n*dog2share, D1_n=D_n*(1-dog2share);
+  const D3_n=D23*dogF3r, D2_n=D23*(1-dogF3r);
+  return { F3:F23_n*f3r, F2:F23_n*(1-f3r), F1:F1_n, T:T_n, D:D_n, D1:D1_n, D2:D2_n, D3:D3_n, F23:F23_n };
+}
+
+function calcEV(probs, hkey, oddsCtx) {
+  if (hkey === '0' && oddsCtx) {
+    const T = probs.T;
+    const p_fav_no_draw = (1/oddsCtx.O_fav) / (1/oddsCtx.O_fav + 1/oddsCtx.O_dog);
+    const p_dog_no_draw = 1 - p_fav_no_draw;
+    const evFav = p_fav_no_draw * (1-T) * 0.93 + p_dog_no_draw * (1-T) * (-0.97);
+    const evDog = p_dog_no_draw * (1-T) * 0.93 + p_fav_no_draw * (1-T) * (-0.97);
+    return { evFav, evDog };
+  }
+  const scens=['F3','F2','F1','T','D1','D2','D3'];
+  let evFav=0, evDog=0;
+  if (hkey.charAt(0)==='-') {
+    const h=HANDICAPS[hkey.slice(1)];
+    const flip={F3:'D3',F2:'D2',F1:'D1',T:'T',D1:'F1',D2:'F2',D3:'F3'};
+    for (const sc of scens) {
+      evFav += probs[sc]*payoutFor(h,flip[sc],'dog');
+      evDog += probs[sc]*payoutFor(h,flip[sc],'fav');
+    }
+  } else {
+    const h=HANDICAPS[hkey];
+    for (const sc of scens) {
+      evFav += probs[sc]*payoutFor(h,sc,'fav');
+      evDog += probs[sc]*payoutFor(h,sc,'dog');
+    }
+  }
+  return {evFav, evDog};
+}
+
+function handicapToValue(hkey) {
+  if (hkey.charAt(0)==='-') return -handicapToValue(hkey.slice(1));
+  const h=HANDICAPS[hkey];
+  if (!h) return 0;
+  if (h.cat==='zero')    return 0;
+  if (h.cat==='small')   return h.frac*0.5;
+  if (h.cat==='one')     return 1.0;
+  if (h.cat==='midOne')  return 1.0+h.frac*0.5;
+  if (h.cat==='half')    return 1.5;
+  if (h.cat==='half_x')  return 1.5+h.frac*0.5;
+  if (h.cat==='two')     return 2.0;
+  return 0;
+}
+
+function findFairHandicap(probs, oddsCtx) {
+  const evs = HANDICAP_KEYS.map(hkey => ({ hkey, evFav: calcEV(probs,hkey,oddsCtx).evFav, value: handicapToValue(hkey) }));
+  for (let i=0; i<evs.length-1; i++) {
+    if (evs[i].evFav>=0 && evs[i+1].evFav<0) {
+      const t = evs[i].evFav/(evs[i].evFav-evs[i+1].evFav);
+      const fairValue = evs[i].value + t*(evs[i+1].value-evs[i].value);
+      return { value:fairValue, lower:evs[i].hkey, upper:evs[i+1].hkey, beyond:false };
+    }
+  }
+  if (evs[evs.length-1].evFav>=0) return { value:2.0, beyond:true, dir:'high' };
+  return { value:handicapToValue(HANDICAP_KEYS[0]), beyond:true, dir:'low' };
+}
+
+function fairToLabel(fair) {
+  if (fair.beyond) return fair.dir==='high' ? '2.0以上' : '負2.0以下';
+  if (fair.lower===fair.upper) return fair.lower;
+  return `${fair.lower} 〜 ${fair.upper}`;
+}
+
+const GAME_COUNT = 6;
+const gameStates = [];
+for (let i=0; i<GAME_COUNT; i++) gameStates.push({ calculated:false, sliderIdx:ZERO_INDEX, favIsHome:true });
+
+function renderGames() {
+  const container = document.getElementById('games');
+  container.innerHTML = '';
+  for (let i=0; i<GAME_COUNT; i++) {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.id = `game-${i}`;
+    card.innerHTML = `
+      <div class="game-header">
+        <div class="game-num">試合 ${i+1}</div>
+        <button class="file-btn small" data-clear="${i}">クリア</button>
+      </div>
+      <div class="col-head"><div>―</div><div>勝敗</div><div>±1.5</div></div>
+      <div class="row away">
+        <div class="row-label">AWAY</div>
+        <input class="odd" id="awayOdds-${i}" type="number" step="0.001" inputmode="decimal" placeholder="1.943">
+        <input class="odd" id="awayHcapOdds-${i}" type="number" step="0.001" inputmode="decimal" placeholder="1.378">
+      </div>
+      <div class="row home">
+        <div class="row-label">HOME</div>
+        <input class="odd" id="homeOdds-${i}" type="number" step="0.001" inputmode="decimal" placeholder="1.943">
+        <input class="odd" id="homeHcapOdds-${i}" type="number" step="0.001" inputmode="decimal" placeholder="3.18">
+      </div>
+      <div style="margin-top:8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:3px;">A社ハンデ -1.5 を出す側(=強い側)</div>
+        <div class="fav-selector">
+          <label data-fav="${i}-away"><input type="radio" name="fav-${i}" value="away"><span>AWAY(-1.5)</span></label>
+          <label class="selected" data-fav="${i}-home"><input type="radio" name="fav-${i}" value="home" checked><span>HOME(-1.5)</span></label>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:8px;">
+        <button class="file-btn" data-calc="${i}">この試合を計算</button>
+      </div>
+      <div class="err-msg" id="errMsg-${i}"></div>
+      <div class="result" id="result-${i}">
+        <div class="strong-tag" id="strongTag-${i}">―</div>
+        <div class="slider-wrap">
+          <div class="slider-row"><span class="slider-label">B社ハンデ</span><span class="slider-value" id="hcapVal-${i}">―</span></div>
+          <input type="range" id="hcapSlider-${i}" min="0" max="${HANDICAP_KEYS.length-1}" value="${ZERO_INDEX}" step="1">
+          <div class="fair-row"><span class="slider-label">適正ハンデ(EV=0)</span><span id="fairHcap-${i}" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--indigo);">―</span></div>
+          <div class="fair-hint" id="fairHint-${i}"></div>
+        </div>
+        <div class="probs-mini">
+          <div class="f23"><div class="lab">F23</div><div class="val" id="pF23-${i}">―</div></div>
+          <div class="f1"><div class="lab">F1</div><div class="val" id="pF1-${i}">―</div></div>
+          <div class="t"><div class="lab">T</div><div class="val" id="pT-${i}">―</div></div>
+          <div class="d"><div class="lab">D</div><div class="val" id="pD-${i}">―</div></div>
+        </div>
+        <div class="ev-pair">
+          <div class="ev-cell" id="evFavCell-${i}">
+            <div class="ev-side" id="evFavSide-${i}">―</div>
+            <div class="ev-val" id="evFav-${i}">―</div>
+            <div class="ev-pct" id="evFavPct-${i}">―%</div>
+          </div>
+          <div class="ev-cell" id="evDogCell-${i}">
+            <div class="ev-side" id="evDogSide-${i}">―</div>
+            <div class="ev-val" id="evDog-${i}">―</div>
+            <div class="ev-pct" id="evDogPct-${i}">―%</div>
+          </div>
+        </div>
+        <div class="verdict" id="verdict-${i}">―</div>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+  for (let i=0; i<GAME_COUNT; i++) {
+    document.querySelectorAll(`input[name="fav-${i}"]`).forEach(r => {
+      r.addEventListener('change', (e) => {
+        document.querySelectorAll(`[data-fav^="${i}-"]`).forEach(l => l.classList.remove('selected'));
+        e.target.closest('label').classList.add('selected');
+      });
+    });
+    document.getElementById(`hcapSlider-${i}`).addEventListener('input', () => {
+      gameStates[i].sliderIdx = parseInt(document.getElementById(`hcapSlider-${i}`).value,10);
+      if (gameStates[i].calculated) updateEV(i);
+    });
+  }
+  document.querySelectorAll('[data-calc]').forEach(b => {
+    b.addEventListener('click', () => calculateGame(parseInt(b.dataset.calc,10)));
+  });
+  document.querySelectorAll('[data-clear]').forEach(b => {
+    b.addEventListener('click', () => clearGame(parseInt(b.dataset.clear,10)));
+  });
+}
+
+function showErr(i, msg) {
+  const el = document.getElementById(`errMsg-${i}`);
+  el.textContent = '✗ ' + msg;
+  el.classList.add('visible');
+}
+function clearErr(i) { document.getElementById(`errMsg-${i}`).classList.remove('visible'); }
+
+function calculateGame(i) {
+  clearErr(i);
+  const awayOdds = parseFloat(document.getElementById(`awayOdds-${i}`).value);
+  const homeOdds = parseFloat(document.getElementById(`homeOdds-${i}`).value);
+  const awayHcapOdds = parseFloat(document.getElementById(`awayHcapOdds-${i}`).value);
+  const homeHcapOdds = parseFloat(document.getElementById(`homeHcapOdds-${i}`).value);
+  const favRadio = document.querySelector(`input[name="fav-${i}"]:checked`);
+  const favSide = favRadio ? favRadio.value : 'home';
+  if (!(awayOdds>1) || !(homeOdds>1) || !(awayHcapOdds>1) || !(homeHcapOdds>1)) {
+    showErr(i, '全てのオッズを 1.0 より大きい数値で入力してください');
+    return false;
+  }
+  gameStates[i] = { calculated:true, sliderIdx:ZERO_INDEX, favIsHome:favSide==='home', awayOdds, homeOdds, awayHcapOdds, homeHcapOdds };
+  document.getElementById(`result-${i}`).classList.add('visible');
+  document.getElementById(`hcapSlider-${i}`).value = ZERO_INDEX;
+  const card = document.getElementById(`game-${i}`);
+  card.classList.remove('fav-away','fav-home');
+  card.classList.add(gameStates[i].favIsHome ? 'fav-home' : 'fav-away');
+  updateEV(i);
+  return true;
+}
+
+function clearGame(i) {
+  ['awayOdds','homeOdds','awayHcapOdds','homeHcapOdds'].forEach(f => {
+    document.getElementById(`${f}-${i}`).value = '';
+  });
+  document.getElementById(`result-${i}`).classList.remove('visible');
+  const card = document.getElementById(`game-${i}`);
+  card.classList.remove('fav-away','fav-home');
+  gameStates[i] = { calculated:false, sliderIdx:ZERO_INDEX, favIsHome:true };
+  clearErr(i);
+}
+
+function updateEV(i) {
+  const g = gameStates[i];
+  if (!g.calculated) return;
+  const O_fav  = g.favIsHome ? g.homeOdds     : g.awayOdds;
+  const O_dog  = g.favIsHome ? g.awayOdds     : g.homeOdds;
+  const O_hfav = g.favIsHome ? g.homeHcapOdds : g.awayHcapOdds;
+  const O_hdog = g.favIsHome ? g.awayHcapOdds : g.homeHcapOdds;
+  const favName = g.favIsHome ? 'HOME' : 'AWAY';
+  const dogName = g.favIsHome ? 'AWAY' : 'HOME';
+  const haLabel = g.favIsHome ? 'ホーム' : 'アウェイ';
+  const probs = estimateProbs(O_fav, O_dog, O_hfav, O_hdog, g.favIsHome);
+  const oddsCtx = { O_fav, O_dog };
+  document.getElementById(`strongTag-${i}`).textContent = `強い側 = ${favName} (${haLabel})`;
+  document.getElementById(`pF23-${i}`).textContent = (probs.F23*100).toFixed(1) + '%';
+  document.getElementById(`pF1-${i}`).textContent  = (probs.F1*100).toFixed(1) + '%';
+  document.getElementById(`pT-${i}`).textContent   = (probs.T*100).toFixed(1) + '%';
+  document.getElementById(`pD-${i}`).textContent   = (probs.D*100).toFixed(1) + '%';
+  const sliderIdx = g.sliderIdx;
+  const hkey = HANDICAP_KEYS[sliderIdx];
+  const isReverse = hkey.charAt(0) === '-';
+  const hcapValEl = document.getElementById(`hcapVal-${i}`);
+  hcapValEl.textContent = hkey;
+  hcapValEl.style.color = isReverse ? 'var(--purple)' : 'var(--crimson)';
+  const fair = findFairHandicap(probs, oddsCtx);
+  const fairEl = document.getElementById(`fairHcap-${i}`);
+  const fairHintEl = document.getElementById(`fairHint-${i}`);
+  fairEl.textContent = fairToLabel(fair);
+  if (fair.beyond) {
+    fairHintEl.textContent = fair.dir==='high' ? '※全ハンデで強い側EV+' : '※全ハンデで強い側EV−';
+    fairHintEl.style.color = 'var(--grey)';
+  } else {
+    const cur = handicapToValue(hkey);
+    if (cur < fair.value)      { fairHintEl.textContent = `現在${hkey} < 適正 → 強い側EV+`; fairHintEl.style.color = 'var(--green)'; }
+    else if (cur > fair.value) { fairHintEl.textContent = `現在${hkey} > 適正 → 弱い側EV+`; fairHintEl.style.color = 'var(--green)'; }
+    else                       { fairHintEl.textContent = '現在ハンデ ≒ 適正';              fairHintEl.style.color = 'var(--grey)'; }
+  }
+  const { evFav, evDog } = calcEV(probs, hkey, oddsCtx);
+  const fmt = v => (v>=0 ? '+' : '') + v.toFixed(4);
+  const pct = v => (v>=0 ? '+' : '') + (v*100).toFixed(2) + '%';
+  document.getElementById(`evFavSide-${i}`).textContent = (isReverse ? 'もらう側 (' : '出す側 (') + favName + ')';
+  document.getElementById(`evDogSide-${i}`).textContent = (isReverse ? '出す側 (' : 'もらう側 (') + dogName + ')';
+  const evFavEl = document.getElementById(`evFav-${i}`);
+  const evDogEl = document.getElementById(`evDog-${i}`);
+  evFavEl.textContent = fmt(evFav);
+  evDogEl.textContent = fmt(evDog);
+  evFavEl.className = 'ev-val ' + (evFav>=0 ? 'pos' : 'neg');
+  evDogEl.className = 'ev-val ' + (evDog>=0 ? 'pos' : 'neg');
+  document.getElementById(`evFavPct-${i}`).textContent = pct(evFav);
+  document.getElementById(`evDogPct-${i}`).textContent = pct(evDog);
+  const favCell = document.getElementById(`evFavCell-${i}`);
+  const dogCell = document.getElementById(`evDogCell-${i}`);
+  favCell.classList.remove('recommend','bad');
+  dogCell.classList.remove('recommend','bad');
+  const verdictEl = document.getElementById(`verdict-${i}`);
+  const bestEv = Math.max(evFav, evDog);
+  const favRole = isReverse ? `もらう側(${favName})` : `出す側(${favName})`;
+  const dogRole = isReverse ? `出す側(${dogName})`   : `もらう側(${dogName})`;
+  const bestSide = evFav>evDog ? favRole : dogRole;
+  const bestCell = evFav>evDog ? favCell : dogCell;
+  const revTag = isReverse ? '⚠逆ハンデ ' : '';
+  if (bestEv > 0.02) {
+    bestCell.classList.add('recommend');
+    verdictEl.className = 'verdict good';
+    verdictEl.textContent = `${revTag}★推奨: ${bestSide} (EV ${pct(bestEv)})`;
+  } else if (bestEv > 0) {
+    verdictEl.className = 'verdict';
+    verdictEl.textContent = `${revTag}△ ${bestSide} わずかEV+ (${pct(bestEv)})`;
+  } else {
+    favCell.classList.add('bad'); dogCell.classList.add('bad');
+    verdictEl.className = 'verdict bad';
+    verdictEl.textContent = `${revTag}見送り推奨 (最良 ${pct(bestEv)})`;
+  }
+}
+
+document.getElementById('calcAllBtn').addEventListener('click', () => {
+  let anySuccess = false;
+  for (let i=0; i<GAME_COUNT; i++) {
+    const anyOdds = ['awayOdds','homeOdds','awayHcapOdds','homeHcapOdds'].some(f => document.getElementById(`${f}-${i}`).value.trim() !== '');
+    if (anyOdds) { if (calculateGame(i)) anySuccess = true; }
+  }
+  if (anySuccess) {
+    for (let i=0; i<GAME_COUNT; i++) {
+      if (gameStates[i].calculated) {
+        document.getElementById(`result-${i}`).scrollIntoView({ behavior:'smooth', block:'start' });
+        break;
+      }
+    }
+  }
+});
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  if (!confirm('全試合の入力を消しますか?')) return;
+  for (let i=0; i<GAME_COUNT; i++) clearGame(i);
+});
+renderGames();
+</script>
+</body>
+</html>
