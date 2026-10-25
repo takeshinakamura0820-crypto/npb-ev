@@ -232,7 +232,7 @@ let custom = store.get("mb.custom", []);          // [{k,sp,n,e,manual?}]
 let manual = store.get("mb.manual", {});          // {leagueKey:{YYYYMMDD:[{h,t,a}]}}
 let sel = new Set(store.get("mb.sel", ["jpn.1"]));
 let events = [], topIds = {}, base = null;
-$("hideDone").checked = store.get("mb.hide", false);
+$("hideDone").checked = store.get("mb.hide", true);
 $("showScore").checked = store.get("mb.score", false);
 
 const leagues = () => BUILTIN.concat(custom);
@@ -401,7 +401,9 @@ async function loadTop(){
 const BLEAGUE_URL = "https://raw.githubusercontent.com/takeshinakamura0820-crypto/npb-ev/main/bleague.json";
 async function loadBleague(evs){
   const j = await getJSON(BLEAGUE_URL + "?t=" + Date.now());
-  (j.games||[]).forEach(g=>evs.push({lg:"bleague", ms:new Date(g.t).getTime(), h:g.h, a:g.a, s:"pre"}));
+  // 公式データに試合状態は無いので、開始から2時間半を過ぎたら終了扱い
+  (j.games||[]).forEach(g=>{ const ms = new Date(g.t).getTime();
+    evs.push({lg:"bleague", ms, h:g.h, a:g.a, s: Date.now() > ms + 2.5*3600e3 ? "post" : "pre"}); });
 }
 async function load(){
   if(loading) return; loading = true; $("refresh").disabled = true; $("upd").textContent = "取得中…";
