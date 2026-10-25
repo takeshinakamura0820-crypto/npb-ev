@@ -393,7 +393,7 @@ function buildText(){
     const lines = [`「${lg.e}${lg.n}」`]; let cur = null, first = true;
     evs.forEach(ev=>{
       const j = new Date(ev.ms + 9*3600e3), day = ev.manual ? ev.day : dayOf(j);
-      if(day!==cur){ if(cur!==null) lines.push(""); lines.push(dLabel(day)); cur = day; first = true; }
+      if(day!==cur){ if(cur!==null) lines.push(""); lines.push(dLabel(day), ""); cur = day; first = true; }
       if(!first) lines.push("");
       const mid = ($("showScore").checked && ev.sc) ? `${hm(j)}（${ev.sc}${ev.s==="in"?" 試合中":""}）` : hm(j);
       lines.push(jp(ev.h), mid, jp(ev.a)); first = false;
