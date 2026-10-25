@@ -1,0 +1,55 @@
+name: B.LEAGUE schedule
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch B.PREMIER schedule
+        run: |
+          cat > /tmp/bleague.py <<'PY'
+          #!/usr/bin/env python3
+          # B.LEAGUE公式の日程ページ（B.PREMIER）から今日〜3日後の試合を取得して JSON に保存
+          import re, json, sys, urllib.request, datetime as dt
+          JST = dt.timezone(dt.timedelta(hours=9))
+          now = dt.datetime.now(JST)
+          games, seen = [], set()
+          for k in range(4):
+              d = now + dt.timedelta(days=k)
+              url = f"https://www.bleague.jp/schedule/?tab=1&year={d.year}&mon={d.month:02d}&day={d.day:02d}&event=2&club=&ha=&fb="
+              req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+              html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "ignore")
+              # ページが実際に表示している日付（試合のない日は次の開催日が出る）
+              cur = re.search(r'swiper-slide js-schedule-date-slider-item [^"]*is-current[^"]*"[^>]*>\s*<a[^>]*data-day="(\d+)"[^>]*>\s*<span class="month[^"]*">(\d+)/', html)
+              m = re.search(r'<ul class="round-list" id="schedule-b1">(.*?)</ul>', html, re.S)
+              if not m or not cur: continue
+              gd, gm = int(cur.group(1)), int(cur.group(2))
+              gy = d.year + (1 if gm < d.month else 0)
+              for li in re.finditer(r'<li class="list-item" id="(\d+)">(.*?)</li>', m.group(1), re.S):
+                  b = li.group(2)
+                  names = re.findall(r'<span class="team-name">(.*?)</span>', b)
+                  arena = re.search(r'<div class="info-arena">(.*?)</div>', b, re.S)
+                  spans = re.findall(r'<span>(.*?)</span>', arena.group(1)) if arena else []
+                  t = next((s for s in spans if re.fullmatch(r'\d{1,2}:\d{2}', s.strip())), None)
+                  if len(names) < 2 or not t or li.group(1) in seen: continue
+                  seen.add(li.group(1))
+                  hh, mm = map(int, t.strip().split(":"))
+                  ko = dt.datetime(gy, gm, gd, hh, mm, tzinfo=JST)
+                  games.append({"id": li.group(1), "t": ko.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
+                                "h": names[0].strip(), "a": names[1].strip()})
+          out = {"updated": now.isoformat(timespec="minutes"), "games": games}
+          json.dump(out, open(sys.argv[1] if len(sys.argv) > 1 else "bleague.json", "w"), ensure_ascii=False, indent=0)
+          print(len(games), "games")
+          PY
+          python3 /tmp/bleague.py bleague.json
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bleague.json
+          git diff --cached --quiet || (git commit -m "Update B.LEAGUE schedule" && git push)
