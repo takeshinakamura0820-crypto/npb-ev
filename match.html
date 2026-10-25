@@ -71,7 +71,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)
   </div>
 
   <div>
-    <div class="label">日付</div>
+    <div class="label">期間（複数選択可）</div>
     <div class="chips" id="dates"></div>
   </div>
 
@@ -112,7 +112,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)
   </details>
 
   <div class="legend">データ：ESPN公開スコアボード（開いたとき・更新ボタン・5分ごとに取得）。Bリーグは公式日程（3時間ごとに自動更新）。時刻はすべて日本時間。<br>
-  「今日」はその日0時から翌日の締め時刻までに始まる試合（MLB・NBAは翌日14時、それ以外は翌日11時）。「明日」はその続きから翌々日の締め時刻まで。<br>
+  開始は最後に更新した時刻から。サッカーは当日11:00〜23:59開始が「当日」、翌0:00〜翌14:00が「当日後半」。当日後半はサッカーだけ。サッカー以外の「当日」は翌朝の試合まで含みます（MLB・NBAは翌14:00、その他は翌11:00まで）。<br>
   国内カップ戦は、両チームとも1部所属の試合だけ表示します。</div>
 </div>
 
@@ -246,28 +246,41 @@ const dLabel = ms => { const d = new Date(ms); return `${d.getUTCMonth()+1}月${
 const hm = d => `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`;
 const ymd = ms => { const d = new Date(ms); return `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}`; };
 
-// 表示範囲：今日=当日0時〜翌日の締め時刻、明日=翌日の締め時刻〜翌々日の締め時刻
-// 締め時刻：MLB・NBAは翌日14時、それ以外は翌日11時
+// 表示範囲（日本時間）。開始は「最後に更新した時刻」から。D = 更新した日の0時
+//  サッカー  当日=11:00〜23:59開始 / 当日後半=翌0:00〜翌14:00 / 明日=翌11:00〜翌々14:00
+//  MLB・NBA  当日=〜翌14:00 / 明日=その続き〜翌々14:00（当日後半なし）
+//  その他    当日=〜翌11:00 / 明日=その続き〜翌々11:00（当日後半なし）
+const H = 3600e3, Z = 9*H;                 // Z: JST壁時計 → 実時刻
 const CUT = {mlb:38, nba:38};
-function range(k){
-  const t = todayJ(), Z = 9*3600e3, c = (CUT[k]||35)*3600e3;  // Z: JST壁時計 → 実時刻
-  return base===t ? [t-Z, t+c-Z] : [base+c-24*3600e3-Z, base+c-Z];
+let loadedAt = Date.now();
+let per = new Set(store.get("mb.per", ["d","l"]));
+const isSoccer = lg => lg.sp==="soccer";
+function ranges(lg){
+  const D = todayJ(), now = loadedAt, out = [];
+  const soc = isSoccer(lg), c = (soc ? 38 : (CUT[lg.k]||35))*H, st = soc ? 11*H : 0;
+  if(soc){
+    if(per.has("d")) out.push([Math.max(now, D+st-Z), D+24*H-Z]);
+    if(per.has("l")) out.push([Math.max(now, D+24*H-Z), D+c-Z]);
+  } else if(per.has("d")) out.push([now, D+c-Z]);   // サッカー以外は当日に翌朝分まで含める
+  if(per.has("t")) out.push(soc ? [D+35*H-Z, D+62*H-Z] : [D+c-Z, D+24*H+c-Z]);
+  return out;
 }
 function pick(k){
   const lg = L(k); if(!lg) return [];
-  const [s,e] = range(k), hide = $("hideDone").checked;
+  const rs = ranges(lg), hide = $("hideDone").checked;
+  const inR = ms => rs.some(([s,e])=>ms>=s && ms<e);
   if(lg.manual){
-    const out = [];
-    [base, base+86400e3].forEach(d=>{
+    const out = [], D = todayJ();
+    [D, D+86400e3, D+2*86400e3].forEach(d=>{
       ((manual[k]||{})[ymd(d)]||[]).forEach((m,i)=>{
-        const [hh,mm] = m.t.split(":").map(Number), ms = d + (hh*60+mm)*60e3 - 9*3600e3;
-        if(ms>=s && ms<e) out.push({manual:true, day:d, idx:i, ms, h:m.h, a:m.a, s:"pre"});
+        const [hh,mm] = m.t.split(":").map(Number), ms = d + (hh*60+mm)*60e3 - Z;
+        if(inR(ms) && !(hide && Date.now() > ms + 2.5*H)) out.push({manual:true, day:d, idx:i, ms, h:m.h, a:m.a, s:"pre"});
       });
     });
     return out.sort((x,y)=>x.ms-y.ms);
   }
   return events.filter(ev=>{
-    if(ev.lg!==k || ev.ms<s || ev.ms>=e || (hide && ev.s==="post")) return false;
+    if(ev.lg!==k || !inR(ev.ms) || (hide && ev.s==="post")) return false;
     if(lg.top){ const ids = topIds[lg.top]; if(!ids || !ids.has(ev.hid) || !ids.has(ev.aid)) return false; }
     return true;
   }).sort((x,y)=>x.ms-y.ms);
@@ -275,12 +288,13 @@ function pick(k){
 
 function renderDates(){
   const t = todayJ(), box = $("dates"); box.innerHTML = "";
-  if(base===null || base<t) base = t;
-  [[0,"今日"],[1,"明日"]].forEach(([k,lab])=>{
-    const ms = t + k*86400e3, b = document.createElement("button");
-    b.className="chip"; b.type="button"; b.setAttribute("aria-pressed", ms===base);
-    b.textContent = `${lab} ${new Date(ms).getUTCMonth()+1}/${new Date(ms).getUTCDate()}`;
-    b.onclick = ()=>{ base = ms; renderAll(); };
+  base = per.size===1 && per.has("t") ? t + 86400e3 : t;   // 手入力欄の日付
+  const md = ms => `${new Date(ms).getUTCMonth()+1}/${new Date(ms).getUTCDate()}`;
+  [["d",`当日 ${md(t)}`],["l",`⚽️当日後半 ${md(t+86400e3)}朝`],["t",`明日 ${md(t+86400e3)}`]].forEach(([k,lab])=>{
+    const b = document.createElement("button");
+    b.className="chip"; b.type="button"; b.setAttribute("aria-pressed", per.has(k));
+    b.textContent = lab;
+    b.onclick = ()=>{ per.has(k)?per.delete(k):per.add(k); store.set("mb.per",[...per]); renderAll(); };
     box.appendChild(b);
   });
 }
@@ -425,7 +439,7 @@ async function load(){
       });
     }catch(e){ fail++; if(!why) why = String(e && e.message || e); }
   })]);
-  events = evs;
+  events = evs; if(evs.length) loadedAt = Date.now();
   const n = new Date(Date.now()+9*3600e3);
   $("upd").textContent = `更新 ${n.getUTCMonth()+1}/${n.getUTCDate()} ${hm(n)}（日本時間）・${evs.length}試合${fail?`・取得失敗${fail}/${jobs.length}件（${why}）`:""}`;
   loading = false; $("refresh").disabled = false; renderAll();
