@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Match Board">
+<title>Match Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: 1カラム。上=日付/大会の操作、下=コピー用テキスト */
+:root{
+  --bg:#f3f5f2; --panel:#ffffff; --fg:#17201a; --muted:#66706a; --line:#d8ded9;
+  --accent:#1f7a4d; --accent-fg:#ffffff; --chip:#e6ece7; --warn:#b45309;
+  --f-ui:"M PLUS 1","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#101512; --panel:#18201b; --fg:#e7ede9; --muted:#93a097; --line:#2b362f;
+  --accent:#3fb37a; --accent-fg:#0b130e; --chip:#222c25; --warn:#f59e0b; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-ui);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.02em}
+.sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.label{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:0;background:var(--chip);color:var(--fg);font:600 13px var(--f-ui);
+  padding:7px 11px;border-radius:999px;cursor:pointer;display:inline-flex;gap:5px;align-items:center}
+.chip .n{font:500 11px var(--f-mono);color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.chip[aria-pressed="true"] .n{color:var(--accent-fg);opacity:.8}
+.chip.manual::after{content:"手入力";font-size:10px;opacity:.75}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.opt{font-size:13px;display:flex;gap:6px;align-items:center;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.phead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);gap:8px}
+.ptitle{font-weight:700;font-size:14px}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;font:700 14px var(--f-ui);padding:9px 16px;border-radius:8px;cursor:pointer}
+.btn2{background:var(--chip);color:var(--fg);border:0;font:600 13px var(--f-ui);padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn:disabled,.btn2:disabled{opacity:.5}
+pre{margin:0;padding:14px 14px 18px;font:15px/1.65 var(--f-ui);white-space:pre-wrap;word-break:break-word;min-height:120px;user-select:text;-webkit-user-select:text}
+.toast{font-size:12px;color:var(--accent);font-weight:600}
+.empty{color:var(--muted);font-size:14px}
+.legend{font-size:12px;color:var(--muted);line-height:1.6}
+.body{padding:12px;display:flex;flex-direction:column;gap:10px}
+.form{display:grid;grid-template-columns:1fr 92px 1fr;gap:6px}
+input[type=text],input[type=time],input[type=search]{width:100%;min-width:0;font:15px var(--f-ui);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.list{display:flex;flex-direction:column;gap:4px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.x{background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 8px}
+.hit{background:none;border:0;text-align:left;padding:8px 0;font:14px var(--f-ui);color:var(--fg);cursor:pointer;border-bottom:1px solid var(--line)}
+.hit small{color:var(--muted);font-family:var(--f-mono)}
+details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);padding:4px 0}
+.subchips{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px dashed var(--line);border-radius:10px}
+.btn2.mini{font-size:12px;padding:6px 10px;border-radius:999px}
+</style>
+</head><body>
+<div class="wrap">
+  <div>
+    <div class="row between">
+      <h1>Match Board</h1>
+      <button class="btn2" id="refresh" type="button">更新</button>
+    </div>
+    <div class="sub" id="upd">データ読み込み中…</div>
+  </div>
+
+  <div>
+    <div class="label">日付</div>
+    <div class="chips" id="dates"></div>
+  </div>
+
+  <div>
+    <div class="label">大会（複数選択可）</div>
+    <div class="chips" id="leagues"></div>
+  </div>
+
+  <div class="row">
+    <label class="opt"><input type="checkbox" id="hideDone"> 終了した試合を除く</label>
+    <label class="opt"><input type="checkbox" id="showScore"> スコアを付ける</label>
+  </div>
+
+  <div id="manualBox"></div>
+
+  <div class="panel">
+    <div class="phead">
+      <span class="toast" id="toast" aria-live="polite"></span>
+      <button class="btn" id="copy" type="button">コピー</button>
+    </div>
+    <pre id="text"></pre>
+  </div>
+
+  <details class="panel" id="addBox">
+    <summary style="padding:10px 12px">大会を追加する</summary>
+    <div class="body">
+      <div class="label" style="margin:0">ESPNにある大会を検索して追加（英語名で検索。例：Liga MX, Saudi, K League）</div>
+      <input type="search" id="q" placeholder="大会名で検索" autocomplete="off">
+      <div class="list" id="hits"></div>
+      <div class="label" style="margin:8px 0 0">データが無い大会は手入力用として追加</div>
+      <div class="row">
+        <input type="text" id="mname" placeholder="例：Kリーグ" style="flex:1">
+        <button class="btn2" id="madd" type="button">手入力で追加</button>
+      </div>
+      <div class="label" style="margin:8px 0 0">追加済み</div>
+      <div class="list" id="added"></div>
+    </div>
+  </details>
+
+  <div class="legend">データ：ESPN公開スコアボード（開いたとき・更新ボタン・5分ごとに取得）。Bリーグは公式日程（3時間ごとに自動更新）。時刻はすべて日本時間。<br>
+  「今日」はその日0時から翌日の締め時刻までに始まる試合（MLB・NBAは翌日14時、それ以外は翌日11時）。「明日」はその続きから翌々日の締め時刻まで。<br>
+  国内カップ戦は、両チームとも1部所属の試合だけ表示します。</div>
+</div>
+
+<script>
+const BUILTIN = [
+  {k:"jpn.1",sp:"soccer",n:"J1",e:"⚽️"},
+  {k:"eng.1",sp:"soccer",n:"プレミア",e:"⚽️"},
+  {k:"esp.1",sp:"soccer",n:"ラ・リーガ",e:"⚽️"},
+  {k:"ita.1",sp:"soccer",n:"セリエA",e:"⚽️"},
+  {k:"ger.1",sp:"soccer",n:"ブンデス",e:"⚽️"},
+  {k:"fra.1",sp:"soccer",n:"リーグアン",e:"⚽️"},
+  {k:"ned.1",sp:"soccer",n:"エールディビジ",e:"⚽️"},
+  {k:"uefa.champions",sp:"soccer",n:"CL",e:"⚽️"},
+  {k:"uefa.europa",sp:"soccer",n:"EL",e:"⚽️"},
+  {k:"fifa.world",sp:"soccer",n:"W杯",e:"⚽️"},
+  {k:"fifa.worldq.afc",sp:"soccer",n:"W杯予選アジア",e:"⚽️"},
+  {k:"fifa.worldq.uefa",sp:"soccer",n:"W杯予選欧州",e:"⚽️"},
+  {k:"uefa.euro",sp:"soccer",n:"ユーロ",e:"⚽️"},
+  {k:"uefa.euroq",sp:"soccer",n:"ユーロ予選",e:"⚽️"},
+  {k:"uefa.nations",sp:"soccer",n:"ネーションズリーグ",e:"⚽️"},
+  {k:"eng.fa",sp:"soccer",n:"FA杯",e:"⚽️",g:"cup",top:"eng.1"},
+  {k:"eng.league_cup",sp:"soccer",n:"カラバオ杯",e:"⚽️",g:"cup",top:"eng.1"},
+  {k:"esp.copa_del_rey",sp:"soccer",n:"国王杯",e:"⚽️",g:"cup",top:"esp.1"},
+  {k:"esp.super_cup",sp:"soccer",n:"スーペルコパ",e:"⚽️",g:"cup",top:"esp.1"},
+  {k:"ita.coppa_italia",sp:"soccer",n:"コッパ・イタリア",e:"⚽️",g:"cup",top:"ita.1"},
+  {k:"ita.super_cup",sp:"soccer",n:"スーペルコッパ",e:"⚽️",g:"cup",top:"ita.1"},
+  {k:"ger.dfb_pokal",sp:"soccer",n:"DFBポカール",e:"⚽️",g:"cup",top:"ger.1"},
+  {k:"ger.super_cup",sp:"soccer",n:"DFLスーパーカップ",e:"⚽️",g:"cup",top:"ger.1"},
+  {k:"fra.coupe_de_france",sp:"soccer",n:"フランス杯",e:"⚽️",g:"cup",top:"fra.1"},
+  {k:"fra.super_cup",sp:"soccer",n:"トロフェ・デ・シャンピオン",e:"⚽️",g:"cup",top:"fra.1"},
+  {k:"ned.cup",sp:"soccer",n:"KNVB杯",e:"⚽️",g:"cup",top:"ned.1"},
+  {k:"mlb",sp:"baseball",n:"MLB",e:"⚾️"},
+  {k:"nba",sp:"basketball",n:"NBA",e:"🏀"},
+  {k:"bleague",n:"Bリーグプレミア",e:"🏀",src:"bleague"}
+];
+const JP = {
+ // 代表
+ "Afghanistan":"アフガニスタン","Albania":"アルバニア","Algeria":"アルジェリア","Andorra":"アンドラ","Argentina":"アルゼンチン","Armenia":"アルメニア","Australia":"オーストラリア","Austria":"オーストリア","Azerbaijan":"アゼルバイジャン","Bahrain":"バーレーン","Bangladesh":"バングラデシュ","Belarus":"ベラルーシ","Belgium":"ベルギー","Bhutan":"ブータン","Bosnia-Herzegovina":"ボスニア","Brazil":"ブラジル","Brunei Darussalam":"ブルネイ","Bulgaria":"ブルガリア","Cambodia":"カンボジア","Canada":"カナダ","Cape Verde":"カーボベルデ","China":"中国","Chinese Taipei":"台湾","Colombia":"コロンビア","Congo DR":"コンゴ民主共和国","Croatia":"クロアチア","Curaçao":"キュラソー","Cyprus":"キプロス","Czechia":"チェコ","Denmark":"デンマーク","Ecuador":"エクアドル","Egypt":"エジプト","England":"イングランド","Estonia":"エストニア","Faroe Islands":"フェロー諸島","Finland":"フィンランド","France":"フランス","Georgia":"ジョージア","Germany":"ドイツ","Ghana":"ガーナ","Gibraltar":"ジブラルタル","Greece":"ギリシャ","Guam":"グアム","Haiti":"ハイチ","Hong Kong":"香港","Hungary":"ハンガリー","Iceland":"アイスランド","India":"インド","Indonesia":"インドネシア","Iran":"イラン","Iraq":"イラク","Israel":"イスラエル","Italy":"イタリア","Ivory Coast":"コートジボワール","Japan":"日本","Jordan":"ヨルダン","Kazakhstan":"カザフスタン","Kosovo":"コソボ","Kuwait":"クウェート","Kyrgyz Republic":"キルギス","Laos":"ラオス","Latvia":"ラトビア","Lebanon":"レバノン","Liechtenstein":"リヒテンシュタイン","Lithuania":"リトアニア","Luxembourg":"ルクセンブルク","Macau":"マカオ","Malaysia":"マレーシア","Maldives":"モルディブ","Malta":"マルタ","Mexico":"メキシコ","Moldova":"モルドバ","Mongolia":"モンゴル","Montenegro":"モンテネグロ","Morocco":"モロッコ","Myanmar":"ミャンマー","Nepal":"ネパール","Netherlands":"オランダ","New Zealand":"ニュージーランド","North Korea":"北朝鮮","North Macedonia":"北マケドニア","Northern Ireland":"北アイルランド","Norway":"ノルウェー","Oman":"オマーン","Pakistan":"パキスタン","Palestine":"パレスチナ","Panama":"パナマ","Paraguay":"パラグアイ","Philippines":"フィリピン","Poland":"ポーランド","Portugal":"ポルトガル","Qatar":"カタール","Republic of Ireland":"アイルランド","Romania":"ルーマニア","San Marino":"サンマリノ","Saudi Arabia":"サウジアラビア","Scotland":"スコットランド","Senegal":"セネガル","Serbia":"セルビア","Singapore":"シンガポール","Slovakia":"スロバキア","Slovenia":"スロベニア","South Africa":"南アフリカ","South Korea":"韓国","Spain":"スペイン","Sri Lanka":"スリランカ","Sweden":"スウェーデン","Switzerland":"スイス","Syria":"シリア","Tajikistan":"タジキスタン","Thailand":"タイ","Timor-Leste":"東ティモール","Tunisia":"チュニジア","Turkmenistan":"トルクメニスタン","Türkiye":"トルコ","Turkey":"トルコ","Ukraine":"ウクライナ","United Arab Emirates":"UAE","United States":"アメリカ","USA":"アメリカ","Uruguay":"ウルグアイ","Uzbekistan":"ウズベキスタン","Vietnam":"ベトナム","Wales":"ウェールズ","Yemen":"イエメン",
+ // J1
+ "Avispa Fukuoka":"福岡","Cerezo Osaka":"C大阪","FC Tokyo":"FC東京","Fagiano Okayama":"岡山","Gamba Osaka":"G大阪",
+ "JEF United Ichihara-Chiba":"千葉","Kashima Antlers":"鹿島","Kashiwa Reysol":"柏","Kawasaki Frontale":"川崎F","Kyoto Sanga":"京都",
+ "Machida Zelvia":"町田","Mito Hollyhock":"水戸","Nagoya Grampus":"名古屋","Sanfrecce Hiroshima":"広島","Shimizu S-Pulse":"清水",
+ "Tokyo Verdy 1969":"東京V","Urawa Red Diamonds":"浦和","V-Varen Nagasaki":"長崎","Vissel Kobe":"神戸","Yokohama F. Marinos":"横浜FM",
+ // EPL
+ "AFC Bournemouth":"ボーンマス","Arsenal":"アーセナル","Aston Villa":"アストンビラ","Brentford":"ブレントフォード",
+ "Brighton & Hove Albion":"ブライトン","Chelsea":"チェルシー","Coventry City":"コベントリー","Crystal Palace":"クリスタルパレス",
+ "Everton":"エバートン","Fulham":"フラム","Hull City":"ハル","Ipswich Town":"イプスウィッチ","Leeds United":"リーズ",
+ "Liverpool":"リバプール","Manchester City":"マンC","Manchester United":"マンU","Newcastle United":"ニューカッスル",
+ "Nottingham Forest":"ノッティンガム","Sunderland":"サンダーランド","Tottenham Hotspur":"トッテナム",
+ "Wolverhampton Wanderers":"ウルブス","West Ham United":"ウェストハム","Burnley":"バーンリー",
+ // LaLiga
+ "Alavés":"アラベス","Athletic Club":"ビルバオ","Atlético Madrid":"Aマドリード","Barcelona":"バルセロナ","Celta Vigo":"セルタ",
+ "Deportivo":"デポルティボ","Elche":"エルチェ","Espanyol":"エスパニョール","Getafe":"ヘタフェ","Levante":"レバンテ",
+ "Málaga":"マラガ","Osasuna":"オサスナ","Racing Santander":"ラシン","Rayo Vallecano":"ラージョ","Real Betis":"ベティス",
+ "Real Madrid":"Rマドリード","Real Sociedad":"Rソシエダ","Sevilla":"セビージャ","Valencia":"バレンシア","Villarreal":"ビジャレアル",
+ "Girona":"ジローナ","Mallorca":"マジョルカ","Real Oviedo":"オビエド",
+ // Serie A
+ "AC Milan":"ミラン","AS Roma":"ローマ","Atalanta":"アタランタ","Bologna":"ボローニャ","Cagliari":"カリアリ","Como":"コモ",
+ "Fiorentina":"フィオレンティーナ","Frosinone":"フロジノーネ","Genoa":"ジェノア","Internazionale":"インテル","Juventus":"ユベントス",
+ "Lazio":"ラツィオ","Lecce":"レッチェ","Monza":"モンツァ","Napoli":"ナポリ","Parma":"パルマ","Sassuolo":"サッスオーロ",
+ "Torino":"トリノ","Udinese":"ウディネーゼ","Venezia":"ベネチア","Pisa":"ピサ","Cremonese":"クレモネーゼ","Hellas Verona":"ヴェローナ",
+ // Bundesliga
+ "1. FC Union Berlin":"ウニオン","Bayer Leverkusen":"レバークーゼン","Bayern Munich":"バイエルン","Borussia Dortmund":"ドルトムント",
+ "Borussia Mönchengladbach":"ボルシアMG","Eintracht Frankfurt":"フランクフルト","FC Augsburg":"アウクスブルク","FC Cologne":"ケルン",
+ "Hamburg SV":"ハンブルガーSV","Mainz":"マインツ","RB Leipzig":"ライプツィヒ","SC Freiburg":"フライブルク","SC Paderborn 07":"パーダーボルン",
+ "SV Elversberg":"エルバースベルク","Schalke 04":"シャルケ","TSG Hoffenheim":"ホッフェンハイム","VfB Stuttgart":"シュツットガルト",
+ "Werder Bremen":"ブレーメン","VfL Wolfsburg":"ヴォルフスブルク","St. Pauli":"ザンクトパウリ","1. FC Heidenheim 1846":"ハイデンハイム",
+ // Ligue 1
+ "AJ Auxerre":"オセール","AS Monaco":"モナコ","Angers":"アンジェ","Brest":"ブレスト","Le Havre AC":"ルアーブル","Le Mans":"ルマン",
+ "Lens":"ランス","Lille":"リール","Lorient":"ロリアン","Lyon":"リヨン","Marseille":"マルセイユ","Nice":"ニース","Paris FC":"パリFC",
+ "Paris Saint-Germain":"PSG","Stade Rennais":"レンヌ","Strasbourg":"ストラスブール","Toulouse":"トゥールーズ","Troyes":"トロワ","Nantes":"ナント","Metz":"メス",
+ // MLB
+ "Arizona Diamondbacks":"ダイヤモンドバックス","Athletics":"アスレチックス","Atlanta Braves":"ブレーブス","Baltimore Orioles":"オリオールズ",
+ "Boston Red Sox":"レッドソックス","Chicago Cubs":"カブス","Chicago White Sox":"ホワイトソックス","Cincinnati Reds":"レッズ",
+ "Cleveland Guardians":"ガーディアンズ","Colorado Rockies":"ロッキーズ","Detroit Tigers":"タイガース","Houston Astros":"アストロズ",
+ "Kansas City Royals":"ロイヤルズ","Los Angeles Angels":"エンゼルス","Los Angeles Dodgers":"ドジャース","Miami Marlins":"マーリンズ",
+ "Milwaukee Brewers":"ブルワーズ","Minnesota Twins":"ツインズ","New York Mets":"メッツ","New York Yankees":"ヤンキース",
+ "Philadelphia Phillies":"フィリーズ","Pittsburgh Pirates":"パイレーツ","San Diego Padres":"パドレス","San Francisco Giants":"ジャイアンツ",
+ "Seattle Mariners":"マリナーズ","St. Louis Cardinals":"カージナルス","Tampa Bay Rays":"レイズ","Texas Rangers":"レンジャーズ",
+ "Toronto Blue Jays":"ブルージェイズ","Washington Nationals":"ナショナルズ",
+ // NBA
+ "Atlanta Hawks":"ホークス","Boston Celtics":"セルティックス","Brooklyn Nets":"ネッツ","Charlotte Hornets":"ホーネッツ","Chicago Bulls":"ブルズ",
+ "Cleveland Cavaliers":"キャバリアーズ","Dallas Mavericks":"マーベリックス","Denver Nuggets":"ナゲッツ","Detroit Pistons":"ピストンズ",
+ "Golden State Warriors":"ウォリアーズ","Houston Rockets":"ロケッツ","Indiana Pacers":"ペイサーズ","LA Clippers":"クリッパーズ",
+ "Los Angeles Lakers":"レイカーズ","Memphis Grizzlies":"グリズリーズ","Miami Heat":"ヒート","Milwaukee Bucks":"バックス",
+ "Minnesota Timberwolves":"ティンバーウルブズ","New Orleans Pelicans":"ペリカンズ","New York Knicks":"ニックス","Oklahoma City Thunder":"サンダー",
+ "Orlando Magic":"マジック","Philadelphia 76ers":"76ers","Phoenix Suns":"サンズ","Portland Trail Blazers":"ブレイザーズ",
+ "Sacramento Kings":"キングス","San Antonio Spurs":"スパーズ","Toronto Raptors":"ラプターズ","Utah Jazz":"ジャズ","Washington Wizards":"ウィザーズ",
+ // NFL
+ "Arizona Cardinals":"カーディナルス","Atlanta Falcons":"ファルコンズ","Baltimore Ravens":"レイブンズ","Buffalo Bills":"ビルズ",
+ "Carolina Panthers":"パンサーズ","Chicago Bears":"ベアーズ","Cincinnati Bengals":"ベンガルズ","Cleveland Browns":"ブラウンズ",
+ "Dallas Cowboys":"カウボーイズ","Denver Broncos":"ブロンコス","Detroit Lions":"ライオンズ","Green Bay Packers":"パッカーズ",
+ "Houston Texans":"テキサンズ","Indianapolis Colts":"コルツ","Jacksonville Jaguars":"ジャガーズ","Kansas City Chiefs":"チーフス",
+ "Las Vegas Raiders":"レイダース","Los Angeles Chargers":"チャージャーズ","Los Angeles Rams":"ラムズ","Miami Dolphins":"ドルフィンズ",
+ "Minnesota Vikings":"バイキングス","New England Patriots":"ペイトリオッツ","New Orleans Saints":"セインツ","New York Giants":"ジャイアンツ",
+ "New York Jets":"ジェッツ","Philadelphia Eagles":"イーグルス","Pittsburgh Steelers":"スティーラーズ","San Francisco 49ers":"49ers",
+ "Seattle Seahawks":"シーホークス","Tampa Bay Buccaneers":"バッカニアーズ","Tennessee Titans":"タイタンズ","Washington Commanders":"コマンダース",
+ // NHL
+ "Anaheim Ducks":"ダックス","Boston Bruins":"ブルーインズ","Buffalo Sabres":"セイバーズ","Calgary Flames":"フレームス",
+ "Carolina Hurricanes":"ハリケーンズ","Chicago Blackhawks":"ブラックホークス","Colorado Avalanche":"アバランチ","Columbus Blue Jackets":"ブルージャケッツ",
+ "Dallas Stars":"スターズ","Detroit Red Wings":"レッドウイングス","Edmonton Oilers":"オイラーズ","Florida Panthers":"パンサーズ",
+ "Los Angeles Kings":"キングス","Minnesota Wild":"ワイルド","Montreal Canadiens":"カナディアンズ","Nashville Predators":"プレデターズ",
+ "New Jersey Devils":"デビルズ","New York Islanders":"アイランダーズ","New York Rangers":"レンジャーズ","Ottawa Senators":"セネターズ",
+ "Philadelphia Flyers":"フライヤーズ","Pittsburgh Penguins":"ペンギンズ","San Jose Sharks":"シャークス","Seattle Kraken":"クラーケン",
+ "St. Louis Blues":"ブルース","Tampa Bay Lightning":"ライトニング","Toronto Maple Leafs":"メープルリーフス","Utah Mammoth":"マンモス",
+ "Vancouver Canucks":"カナックス","Vegas Golden Knights":"ゴールデンナイツ","Washington Capitals":"キャピタルズ","Winnipeg Jets":"ジェッツ"
+};
+const jp = n => JP[n] || n;
+const WD = ["日","月","火","水","木","金","土"];
+const $ = id => document.getElementById(id);
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+let custom = store.get("mb.custom", []);          // [{k,sp,n,e,manual?}]
+let manual = store.get("mb.manual", {});          // {leagueKey:{YYYYMMDD:[{h,t,a}]}}
+let sel = new Set(store.get("mb.sel", ["jpn.1"]));
+let events = [], topIds = {}, base = null;
+$("hideDone").checked = store.get("mb.hide", false);
+$("showScore").checked = store.get("mb.score", false);
+
+const leagues = () => BUILTIN.concat(custom);
+const L = k => leagues().find(x=>x.k===k);
+
+// JSTの壁時計をUTCメソッドで扱う
+const toJ = iso => new Date(new Date(iso).getTime() + 9*3600e3);
+const todayJ = () => { const d = new Date(Date.now()+9*3600e3); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); };
+const dayOf = j => Date.UTC(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate());
+const dLabel = ms => { const d = new Date(ms); return `${d.getUTCMonth()+1}月${d.getUTCDate()}日（${WD[d.getUTCDay()]}）`; };
+const hm = d => `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`;
+const ymd = ms => { const d = new Date(ms); return `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}`; };
+
+// 表示範囲：今日=当日0時〜翌日の締め時刻、明日=翌日の締め時刻〜翌々日の締め時刻
+// 締め時刻：MLB・NBAは翌日14時、それ以外は翌日11時
+const CUT = {mlb:38, nba:38};
+function range(k){
+  const t = todayJ(), Z = 9*3600e3, c = (CUT[k]||35)*3600e3;  // Z: JST壁時計 → 実時刻
+  return base===t ? [t-Z, t+c-Z] : [base+c-24*3600e3-Z, base+c-Z];
+}
+function pick(k){
+  const lg = L(k); if(!lg) return [];
+  const [s,e] = range(k), hide = $("hideDone").checked;
+  if(lg.manual){
+    const out = [];
+    [base, base+86400e3].forEach(d=>{
+      ((manual[k]||{})[ymd(d)]||[]).forEach((m,i)=>{
+        const [hh,mm] = m.t.split(":").map(Number), ms = d + (hh*60+mm)*60e3 - 9*3600e3;
+        if(ms>=s && ms<e) out.push({manual:true, day:d, idx:i, ms, h:m.h, a:m.a, s:"pre"});
+      });
+    });
+    return out.sort((x,y)=>x.ms-y.ms);
+  }
+  return events.filter(ev=>{
+    if(ev.lg!==k || ev.ms<s || ev.ms>=e || (hide && ev.s==="post")) return false;
+    if(lg.top){ const ids = topIds[lg.top]; if(!ids || !ids.has(ev.hid) || !ids.has(ev.aid)) return false; }
+    return true;
+  }).sort((x,y)=>x.ms-y.ms);
+}
+
+function renderDates(){
+  const t = todayJ(), box = $("dates"); box.innerHTML = "";
+  if(base===null || base<t) base = t;
+  [[0,"今日"],[1,"明日"]].forEach(([k,lab])=>{
+    const ms = t + k*86400e3, b = document.createElement("button");
+    b.className="chip"; b.type="button"; b.setAttribute("aria-pressed", ms===base);
+    b.textContent = `${lab} ${new Date(ms).getUTCMonth()+1}/${new Date(ms).getUTCDate()}`;
+    b.onclick = ()=>{ base = ms; renderAll(); };
+    box.appendChild(b);
+  });
+}
+const GROUPS = {cup:{n:"欧州カップ",e:"⚽️"}};
+let openG = new Set(store.get("mb.open", []));
+function chip(lg){
+  const b = document.createElement("button");
+  b.className = "chip" + (lg.manual?" manual":""); b.type="button"; b.setAttribute("aria-pressed", sel.has(lg.k));
+  const t = document.createElement("span"); t.textContent = `${lg.e}${lg.n}`;
+  const n = document.createElement("span"); n.className="n"; n.textContent = pick(lg.k).length;
+  b.append(t, n);
+  b.onclick = ()=>{ sel.has(lg.k)?sel.delete(lg.k):sel.add(lg.k); store.set("mb.sel",[...sel]); renderAll(); };
+  return b;
+}
+function renderLeagues(){
+  const box = $("leagues"); box.innerHTML = ""; const done = new Set();
+  leagues().forEach(lg=>{
+    if(!lg.g){ box.appendChild(chip(lg)); return; }
+    if(done.has(lg.g)) return; done.add(lg.g);
+    const G = GROUPS[lg.g], items = leagues().filter(x=>x.g===lg.g), open = openG.has(lg.g);
+    const on = items.filter(x=>sel.has(x.k)).length, cnt = items.reduce((s,x)=>s+pick(x.k).length,0);
+    const b = document.createElement("button"); b.className="chip group"; b.type="button";
+    b.setAttribute("aria-expanded", open); b.setAttribute("aria-pressed", on>0);
+    const t = document.createElement("span"); t.textContent = `${G.e}${G.n}${on?`（${on}）`:""} ${open?"▴":"▾"}`;
+    const n = document.createElement("span"); n.className="n"; n.textContent = cnt;
+    b.append(t,n);
+    b.onclick = ()=>{ open?openG.delete(lg.g):openG.add(lg.g); store.set("mb.open",[...openG]); renderAll(); };
+    box.appendChild(b);
+    const sub = document.createElement("div"); sub.className="subchips"; sub.hidden = !open;
+    const all = document.createElement("button"); all.className="btn2 mini"; all.type="button";
+    const allOn = on===items.length; all.textContent = allOn ? "すべて解除" : "すべて選択";
+    all.onclick = ()=>{ items.forEach(x=> allOn?sel.delete(x.k):sel.add(x.k)); store.set("mb.sel",[...sel]); renderAll(); };
+    sub.appendChild(all); items.forEach(x=>sub.appendChild(chip(x)));
+    box.appendChild(sub);
+  });
+}
+
+// 手入力パネル（選択中の手入力大会ごと）
+function renderManual(){
+  const box = $("manualBox"); box.innerHTML = "";
+  leagues().filter(lg=>lg.manual && sel.has(lg.k)).forEach(lg=>{
+    const p = document.createElement("div"); p.className="panel";
+    const list = pick(lg.k);   // 表示範囲内の手入力試合
+    const names = new Set(); Object.values(manual[lg.k]||{}).forEach(a=>a.forEach(m=>{names.add(m.h);names.add(m.a);}));
+    const dl = "dl-"+lg.k.replace(/[^a-z0-9]/gi,"");
+    p.innerHTML = `<div class="phead"><span class="ptitle"></span></div>
+      <div class="body">
+        <div class="form">
+          <input type="text" placeholder="ホーム" list="${dl}" class="fh">
+          <input type="time" class="ft" value="19:05">
+          <input type="text" placeholder="アウェイ" list="${dl}" class="fa">
+        </div>
+        <datalist id="${dl}"></datalist>
+        <div class="row"><button class="btn2 fadd" type="button">追加</button><span class="sub">11時より前の時刻は翌日の深夜試合として登録します</span></div>
+        <div class="list"></div>
+      </div>`;
+    p.querySelector(".ptitle").textContent = `${lg.e}${lg.n}・${dLabel(base)}の手入力`;
+    const d = p.querySelector("datalist"); [...names].sort().forEach(n=>{ const o=document.createElement("option"); o.value=n; d.appendChild(o); });
+    const ul = p.querySelector(".list");
+    if(!list.length){ const e=document.createElement("div"); e.className="empty"; e.textContent="まだ試合がありません。上の欄に入れて「追加」"; ul.appendChild(e); }
+    list.forEach(m=>{
+      const r = document.createElement("div"); r.className="item";
+      const j = new Date(m.ms + 9*3600e3);
+      const s = document.createElement("span"); s.textContent = `${j.getUTCMonth()+1}/${j.getUTCDate()} ${hm(j)}　${m.h} − ${m.a}`;
+      const x = document.createElement("button"); x.className="x"; x.type="button"; x.textContent="削除";
+      x.onclick = ()=>{ manual[lg.k][ymd(m.day)].splice(m.idx,1); store.set("mb.manual",manual); renderAll(); };
+      r.append(s,x); ul.appendChild(r);
+    });
+    p.querySelector(".fadd").onclick = ()=>{
+      const h = p.querySelector(".fh").value.trim(), a = p.querySelector(".fa").value.trim(), t = p.querySelector(".ft").value;
+      if(!h || !a || !t){ $("toast").textContent = "ホーム・時刻・アウェイを入れてください"; return; }
+      const hh = Number(t.split(":")[0]), key = ymd(hh < 11 ? base + 86400e3 : base);
+      manual[lg.k] = manual[lg.k]||{}; (manual[lg.k][key] = manual[lg.k][key]||[]).push({h,t,a});
+      store.set("mb.manual",manual); renderAll();
+    };
+    box.appendChild(p);
+  });
+}
+
+function buildText(){
+  const blocks = [];
+  leagues().filter(lg=>sel.has(lg.k)).forEach(lg=>{
+    const evs = pick(lg.k); if(!evs.length) return;
+    const lines = [`「${lg.e}${lg.n}」`]; let cur = null, first = true;
+    evs.forEach(ev=>{
+      const j = new Date(ev.ms + 9*3600e3), day = ev.manual ? ev.day : dayOf(j);
+      if(day!==cur){ if(cur!==null) lines.push(""); lines.push(dLabel(day)); cur = day; first = true; }
+      if(!first) lines.push("");
+      const mid = ($("showScore").checked && ev.sc) ? `${hm(j)}（${ev.sc}${ev.s==="in"?" 試合中":""}）` : hm(j);
+      lines.push(jp(ev.h), mid, jp(ev.a)); first = false;
+    });
+    blocks.push(lines.join("\n"));
+  });
+  return blocks.join("\n\n");
+}
+function renderAll(){
+  renderDates(); renderLeagues(); renderManual(); renderAdded();
+  const txt = buildText(), pre = $("text");
+  const msg = t => { pre.innerHTML = ""; const d=document.createElement("div"); d.className="empty"; d.textContent=t; pre.appendChild(d); };
+  if(!sel.size) return msg("上で大会を選ぶと、ここに一覧が出ます。");
+  if(!txt) return msg(events.length ? "この日、選んだ大会の試合はありません。" : "試合データを読み込めていません。「更新」を押してください。");
+  pre.textContent = txt;
+}
+
+// 取得
+let loading = false;
+async function getJSON(u){ const r = await fetch(u, {cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json(); }
+async function loadTop(){
+  const need = [...new Set(leagues().filter(l=>l.top).map(l=>l.top))].filter(k=>!topIds[k]);
+  await Promise.all(need.map(async k=>{
+    try{
+      const j = await getJSON(`https://site.api.espn.com/apis/site/v2/sports/soccer/${k}/teams`);
+      topIds[k] = new Set(j.sports[0].leagues[0].teams.map(t=>String(t.team.id)));
+    }catch(e){}
+  }));
+}
+// Bリーグ：GitHub Actions が公式日程から作るファイルを読む
+const BLEAGUE_URL = "https://raw.githubusercontent.com/takeshinakamura0820-crypto/npb-ev/main/bleague.json";
+async function loadBleague(evs){
+  const j = await getJSON(BLEAGUE_URL + "?t=" + Date.now());
+  (j.games||[]).forEach(g=>evs.push({lg:"bleague", ms:new Date(g.t).getTime(), h:g.h, a:g.a, s:"pre"}));
+}
+async function load(){
+  if(loading) return; loading = true; $("refresh").disabled = true; $("upd").textContent = "取得中…";
+  const t = todayJ(), days = [0,1,2].map(k=>ymd(t+k*86400e3));
+  const auto = leagues().filter(l=>!l.manual && !l.src);
+  const jobs = []; auto.forEach(lg=>days.forEach(d=>jobs.push([lg,d])));
+  const seen = new Set(), evs = []; let fail = 0, why = "";
+  await Promise.all([loadTop(), loadBleague(evs).catch(e=>{ fail++; if(!why) why = "Bリーグ:"+(e&&e.message||e); }), ...jobs.map(async ([lg,d])=>{
+    try{
+      const j = await getJSON(`https://site.api.espn.com/apis/site/v2/sports/${lg.sp}/${lg.k}/scoreboard?dates=${d}&limit=300`);
+      (j.events||[]).forEach(e=>{
+        if(seen.has(e.id)) return; seen.add(e.id);
+        const c = e.competitions[0], side = {}; c.competitors.forEach(x=>side[x.homeAway]=x);
+        const s = (e.status&&e.status.type&&e.status.type.state)||"pre";
+        const ev = {lg:lg.k, ms:new Date(e.date).getTime(), h:side.home.team.displayName||"", a:side.away.team.displayName||"",
+          hid:String(side.home.team.id), aid:String(side.away.team.id), s};
+        if(s!=="pre") ev.sc = `${side.home.score??""}-${side.away.score??""}`;
+        evs.push(ev);
+      });
+    }catch(e){ fail++; if(!why) why = String(e && e.message || e); }
+  })]);
+  events = evs;
+  const n = new Date(Date.now()+9*3600e3);
+  $("upd").textContent = `更新 ${n.getUTCMonth()+1}/${n.getUTCDate()} ${hm(n)}（日本時間）・${evs.length}試合${fail?`・取得失敗${fail}/${jobs.length}件（${why}）`:""}`;
+  loading = false; $("refresh").disabled = false; renderAll();
+}
+
+// 大会の追加
+let catalog = null;
+async function loadCatalog(){
+  if(catalog) return catalog;
+  const sports = ["soccer","basketball","baseball","hockey","football"]; catalog = [];
+  await Promise.all(sports.map(async sp=>{
+    try{ const j = await getJSON(`https://site.api.espn.com/apis/site/v2/leagues/dropdown?sport=${sp}&limit=500`);
+      j.leagues.forEach(l=>catalog.push({k:l.slug, sp, name:l.name})); }catch(e){}
+  }));
+  return catalog;
+}
+const EMO = {soccer:"⚽️",basketball:"🏀",baseball:"⚾️",hockey:"🏒",football:"🏈"};
+$("q").addEventListener("input", async ()=>{
+  const q = $("q").value.trim().toLowerCase(), box = $("hits"); box.innerHTML = "";
+  if(q.length<2) return;
+  const cat = await loadCatalog();
+  cat.filter(c=>c.name.toLowerCase().includes(q) || c.k.includes(q)).slice(0,12).forEach(c=>{
+    const b = document.createElement("button"); b.className="hit"; b.type="button";
+    b.textContent = `${EMO[c.sp]||""}${c.name} `; const s=document.createElement("small"); s.textContent=c.k; b.appendChild(s);
+    if(L(c.k)){ b.disabled = true; b.style.opacity=.5; }
+    b.onclick = ()=>{ custom.push({k:c.k, sp:c.sp, n:c.name, e:EMO[c.sp]||""}); sel.add(c.k);
+      store.set("mb.custom",custom); store.set("mb.sel",[...sel]); $("q").value=""; box.innerHTML=""; renderAll(); load(); };
+    box.appendChild(b);
+  });
+  if(!box.children.length){ const e=document.createElement("div"); e.className="empty"; e.textContent="見つかりません。下の手入力で追加できます。"; box.appendChild(e); }
+});
+$("madd").addEventListener("click", ()=>{
+  const n = $("mname").value.trim(); if(!n) return;
+  const k = "m:" + Date.now().toString(36);
+  custom.push({k, n, e:"", manual:true}); sel.add(k);
+  store.set("mb.custom",custom); store.set("mb.sel",[...sel]); $("mname").value=""; renderAll();
+});
+function renderAdded(){
+  const box = $("added"); box.innerHTML = "";
+  if(!custom.length){ const e=document.createElement("div"); e.className="empty"; e.textContent="なし"; box.appendChild(e); return; }
+  custom.forEach((lg,i)=>{
+    const r = document.createElement("div"); r.className="item";
+    const s = document.createElement("span"); s.textContent = `${lg.e}${lg.n}${lg.manual?"（手入力）":""}`;
+    const x = document.createElement("button"); x.className="x"; x.type="button"; x.textContent="削除";
+    x.onclick = ()=>{ custom.splice(i,1); sel.delete(lg.k); store.set("mb.custom",custom); store.set("mb.sel",[...sel]); renderAll(); };
+    r.append(s,x); box.appendChild(r);
+  });
+}
+
+["hideDone","showScore"].forEach(id=>$(id).addEventListener("change",()=>{
+  store.set(id==="hideDone"?"mb.hide":"mb.score", $(id).checked); renderAll(); }));
+$("copy").addEventListener("click", async ()=>{
+  const txt = buildText(); if(!txt) return;
+  try{ await navigator.clipboard.writeText(txt); $("toast").textContent = "コピーしました"; }
+  catch(e){ const r = document.createRange(); r.selectNodeContents($("text")); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    $("toast").textContent = "選択しました。長押しでコピーしてください"; }
+  setTimeout(()=>$("toast").textContent="", 2500);
+});
+$("refresh").addEventListener("click", load);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) load(); });
+setInterval(()=>{ if(!document.hidden) load(); }, 5*60e3);
+renderAll(); load();
+</script>
+</body></html>
