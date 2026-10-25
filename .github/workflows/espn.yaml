@@ -1,0 +1,132 @@
+name: ESPN scoreboard
+on:
+  schedule:
+    - cron: "7,27,47 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: espn
+  cancel-in-progress: false
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch ESPN scoreboards
+        run: |
+          cat > /tmp/espn_fetch.py <<'PY'
+          #!/usr/bin/env python3
+          # Match Board用：match.html に載っているESPNの大会の試合を取得して espn.json に保存する
+          # （iPhoneから一斉に取得するとESPNにIPを止められるため、GitHubのサーバーで代わりに取得する）
+          import os, re, json, sys, time, urllib.request, datetime as dt
+          from concurrent.futures import ThreadPoolExecutor
+
+          BASE = "https://site.api.espn.com/apis/site/v2"
+          JST = dt.timezone(dt.timedelta(hours=9))
+          html_path = sys.argv[1] if len(sys.argv) > 1 else "match.html"
+          out_path = sys.argv[2] if len(sys.argv) > 2 else "espn.json"
+          cat_path = sys.argv[3] if len(sys.argv) > 3 else "espn_catalog.json"
+
+          def get(url, tries=3):
+              for i in range(tries):
+                  try:
+                      req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                      return json.loads(urllib.request.urlopen(req, timeout=30).read())
+                  except Exception as e:
+                      err = e; time.sleep(2 * (i + 1))
+              raise err
+
+          # match.html の BUILTIN から大会一覧を読む（Bリーグなど src 付きは除く）
+          src = open(html_path, encoding="utf-8").read()
+          block = re.search(r"const BUILTIN = \[(.*?)\];", src, re.S).group(1)
+          leagues, tops = [], set()
+          for line in block.splitlines():
+              m = re.search(r'k:"([^"]+)",sp:"([a-z]+)"', line)
+              if not m or "src:" in line: continue
+              leagues.append((m.group(1), m.group(2)))
+              t = re.search(r'top:"([^"]+)"', line)
+              if t: tops.add(t.group(1))
+
+          now = dt.datetime.now(JST)
+          days = [(now + dt.timedelta(days=k)).strftime("%Y%m%d") for k in (0, 1, 2)]
+
+          def fetch_board(job):
+              (k, sp), d = job
+              try:
+                  j = get(f"{BASE}/sports/{sp}/{k}/scoreboard?dates={d}&limit=300")
+              except Exception as e:
+                  return k, d, None, str(e)
+              evs = []
+              for e in j.get("events", []):
+                  c = e["competitions"][0]
+                  side = {x["homeAway"]: x for x in c["competitors"]}
+                  if "home" not in side or "away" not in side: continue
+                  s = ((e.get("status") or {}).get("type") or {}).get("state") or "pre"
+                  ev = {"lg": k, "id": e["id"], "t": e["date"],
+                        "h": side["home"]["team"].get("displayName", ""), "a": side["away"]["team"].get("displayName", ""),
+                        "hid": str(side["home"]["team"]["id"]), "aid": str(side["away"]["team"]["id"]), "s": s}
+                  if s != "pre":
+                      ev["sc"] = f'{side["home"].get("score", "")}-{side["away"].get("score", "")}'
+                  evs.append(ev)
+              return k, d, evs, None
+
+          jobs = [(lg, d) for lg in leagues for d in days]
+          events, seen, fails, failed_lg = [], set(), [], set()
+          with ThreadPoolExecutor(4) as ex:
+              for k, d, evs, err in ex.map(fetch_board, jobs):
+                  if err: fails.append(f"{k}/{d}: {err}"); failed_lg.add(k); continue
+                  for ev in evs:
+                      key = (ev["lg"], ev["id"])
+                      if key in seen: continue
+                      seen.add(key); events.append(ev)
+
+          # 前回のデータ（取得に失敗した大会はこれを残す）
+          old = {}
+          if os.path.exists(out_path):
+              try: old = json.load(open(out_path))
+              except Exception: old = {}
+          if len(fails) > len(jobs) // 2:
+              # 半分以上失敗＝止められている可能性が高い。前回のデータを残して終了
+              print("too many failures:", len(fails), "/", len(jobs), "- keep previous data"); sys.exit(0)
+          for ev in old.get("events", []):
+              if ev["lg"] in failed_lg and (ev["lg"], ev["id"]) not in seen:
+                  seen.add((ev["lg"], ev["id"])); events.append(ev)
+
+          top = dict(old.get("top", {}))
+          for k in sorted(tops):
+              try:
+                  j = get(f"{BASE}/sports/soccer/{k}/teams")
+                  top[k] = [str(t["team"]["id"]) for t in j["sports"][0]["leagues"][0]["teams"]]
+              except Exception as e:
+                  fails.append(f"teams {k}: {e}")  # 失敗時は前回の一覧を使う
+
+          events.sort(key=lambda e: (e["t"], e["lg"]))
+          out = {"updated": now.isoformat(timespec="minutes"), "events": events, "top": top, "fails": fails}
+          json.dump(out, open(out_path, "w"), ensure_ascii=False, separators=(",", ":"))
+          print(len(leagues), "leagues,", len(events), "events,", len(fails), "fails")
+
+          # 「大会を追加する」の検索用一覧（1日1回、または未作成のときだけ。取得できたときだけ上書き）
+          if os.path.exists(cat_path) and not (now.hour == 4 and now.minute < 20):
+              sys.exit(0)
+          cat = []
+          for sp in ["soccer", "basketball", "baseball", "hockey", "football"]:
+              try:
+                  j = get(f"{BASE}/leagues/dropdown?sport={sp}&limit=500")
+                  cat += [{"k": l["slug"], "sp": sp, "name": l["name"]} for l in j.get("leagues", [])]
+              except Exception:
+                  pass
+          if cat:
+              json.dump(cat, open(cat_path, "w"), ensure_ascii=False, separators=(",", ":"))
+              print(len(cat), "catalog leagues")
+          PY
+          python3 /tmp/espn_fetch.py match.html espn.json espn_catalog.json
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add espn.json espn_catalog.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update ESPN scoreboard"
+          for i in 1 2 3; do git pull --rebase -q && git push && exit 0; sleep 5; done
+          exit 1
