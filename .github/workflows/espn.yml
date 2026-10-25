@@ -1,0 +1,66 @@
+name: ESPN scoreboard
+on:
+  schedule:
+    - cron: "7,27,47 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: espn
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch ESPN
+        env:
+          CODE: >-
+            eNqdV22PE9cV/j6/4uZGlJlgxrtLIrWmLgoSbakahAr5UDkumvVc24PHM9O5Y+8ay9KOqSgQEDRt
+            k5CQUiUECAhopUZCYQk/ZtaGfOIv9Dn3jl93K6KuEJ77ds6555znOee++UaxI+PiuhcURdBlUS9p
+            hsEh4032npPUmuxo6MTui7/de7X9WZsm7GbS9lmWPni5fSlLv8rSO1n6p2z44bFTJ09k6aPR7bs7
+            25/h4+U3d0bXL2bDj0bXPh59/0mW4t8dJmQU2GdlGJCEnedfjB5+mqU3cBz6Xm1f9E5Ct8jSD7Ph
+            pZ0nW+OPoeLBRABty9J7WtGD4yche/zwy2yYYnM2vKJWb9FwK/2Vl/y6sw4rsuG32fnt7Px1+j+9
+            u/P0q2x4LRteXhL7avuS4bWjME5YKAssFgVGRhaY7GGYeG1MdGLf99btWPyxI2RSYK6TCFphjmRu
+            YtTjsM1qYVDrxLEIErveSTqxkCwXe7oZC8c9GYb+sU1R6yRhbBhH3z11jJUZbyZJJEvFovQSYTuR
+            Zysv1cJ2EQOppovdNW785tRpbHcTm9Seg6PM/NsVfuKYzbATy/LPLMugEJ2JnKSJ7biB7cSNbmW1
+            yrw680VgTqYs9gu2yoQvBeOz2HIj7CS7Tq/teXotPz0NKzdqzu7Dh/Y8fGju8Bkcc/ywkQsxXFFn
+            DZGYcDr8H3tClg9ZJYPhrx7GzGNewGInaAhTLeZL9JfEvdmA/hAw2LIYPft3+lfLbyIyAq7r8/el
+            iA++20D8eInx98Jznu87xXfsFT6wloQiuoFKEtsPHVeaSwowDCNcGGOdQHBq+dCKZVMamNZMmtis
+            iShhx9SPB2AgncTiDUQc4wbisJJjS1+IyFxjbzHTYwfYai4rdjw4E1sNQGkBqY/Y0feP//b08RNM
+            A0tDFPB6eecuMPTy/sNsuAXwHc3O3yeYDP+Vpfez9Bsm4xrbeQqAXs3Sxz/cuJ2l1wgoNF1m6nbT
+            RCswEdRC1wsaZd5J6gd/yic3Ndb9sNbCgRimCyeuNc2YAycymZpVZh9UTPutI9YH1cO8QGoJgvYp
+            y27EYScyVy3DF04DfoUrw0jiQKWKfcgPy6B08L1AUEYoVbaMfC+hKWnmedFeVL+/VeJm5Q+8esDi
+            BRnRwDl4jkb7C0qW9ihSNggTHIYGDqNKnHTQeomAnnhBR6iNuXGALnzimmZ7aneBTb7XrDxOyZIt
+            uNDMmmX9SUld2HZc10ymUi3DCMINTQUTFrIxY4IgLMN1espDJu05wBYogtbKLcuyZRLXadrk+36/
+            r73P5ZbCVYtuaK4U2GqBrVlVjcO6QDKdWac6YJ4N13Ofmi1EIMINXSjDtLELfGexQBiu8z4x3aAo
+            iQllsS+jQbHfwrgWxkLJPULXAADdwU98r+0RUla49sJr8JEDEca4BXYCnAirktjMXSi6OlmmxKHS
+            5KxNZnHRBc4lEq5SneMPym1RQYa2IziWNEperaxUpxuk5wrs6W9WeDNsi3c3nB6vltimkr9J8muz
+            42GM04PpWYRUHeIqs7BVCaP8ckjM/OxSjinNUGuaQlsvEyfpSMQNp/sDS08mvUgsTdG+fI5HseAz
+            4unSLbjfANXBfdxz8YGb4xfg4okeUWAwXuAjhktglazUPoCDeCKcNq9qna4HDDq9Ew6WIIojS7gz
+            PaGu+toTuzQq+yi2e+nVZis9S/sWtc32Sdq1EBnJ3ihrHy3Rb7fCZY1X4a76/v689tzDlMba6sHB
+            /rzW3ev759w/JQzRzSl8PpexrhPaMIAujWi/gSWNVL+hyEgzj5pxaYIAXjV0ZhNDCvQwdcfzpf4R
+            7hkcnKPPwhyTbnio2rv7FPNtS2Fuc1Z+5yyk2gS9YtNuO5E5RxUFIoX5wgwPY3NJmzO5OrgBRADc
+            l1gfqwNuHZ4ZqmivhZldSFBQ7irFXbkYrZboEUwoaEjtakGFTwV9YRusoZ0ENjhpD7ApwGFJGyF6
+            MEO7dT5qKLWjS1dHn/+DWs3zf1bV8zlK6aS3fDC6/e/x33Xze2vSGj/O0r+qfvWj8SO0rDeopoY+
+            0Wh/YMCuUNpUUm2x6clEmpNuLHclUSzT26fdh6mK8XTj3sQ5OaWVUDOmIkGdGA1UtFixyNa0Htzs
+            6uXRxQs7T7/eeXJZ3+PV9hcLHfek9x9de/zy/LPx1t0svfLDg09pcmu42zGTG9NL4MW3w53vLihN
+            UewFxF1hiL4l6Kn4U+tcAmZmZgI/xXxCmYrxQYRQRDgvul7YkdSRO5RA1GTCeYm5otsDnSm4/f/i
+            fUrNPF9o5wwpTuDumUpToqbcMXaly15H9s4fVHeq414tMaf2YQ7GgcC19aomS1ROgR4AzcBcHry2
+            1MqwVhOxKrbEf5LPQABRlRZxWoW4MlkiSIUwdcWzID8lTFVBXEtTTj7SUqvVH1Oql4CvjjKYRtAH
+            8FXKqTQb3xgCJdP8mXaqO8+eZ+kFI6c3m3xCyCz7TnvddaAKsYJJyu3a/3AhUKHqXCeiUka1AX2R
+            7ckQN0SbbFIXJCNRK/M28I8uRFWrPEdKbEKlKiqqG8O3ugnPqWxgKBy6nXZEECywBTBi9wZJFIFE
+            Tp9xZM3zyr908PAh2o2c2KEeoWzyAlWIEofFGg+U6LmvyaBJA5xDQJs1s7SwjBVtomKobOtKTj1o
+            9p8/G13+Z/6W3kJf/2h8++aL/3yJB752M8hrdfzJ16vk+q00S7+nN3X6eHzz/s6zm+OL1wnP6T31
+            JICYvxDOc667qyZvza+COMafP8FQva93MdvkqWgpnBGkqGe16R3LymX2dj69YevIsJ+ztZU8++ch
+            DjG6yaOclRElLXJWZT75dN2RLZGsO76fj8Tku4nXgujRVz0M9Y7qjwFXHouiG4eRG24ERxRAytTX
+            5u3rO9P2VbWUMPAALOzzFpLGh3F+R5EDkEVdCKVUQJ2PWlRf1YGu8nPt6gR4irf2BtzM5siRkjwO
+            1XpylqOYynN04v//I0dnvO1rQZRz+Rt+0pXAA/8F4QV6IQ==
+        run: python3 -c "import os,zlib,base64;exec(zlib.decompress(base64.b64decode(os.environ['CODE'].replace(' ',''))))" match.html espn.json espn_catalog.json
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add espn.json espn_catalog.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update ESPN scoreboard"
+          for i in 1 2 3; do git pull --rebase -q && git push && exit 0; sleep 5; done
+          exit 1
