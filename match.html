@@ -111,7 +111,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)
     </div>
   </details>
 
-  <div class="legend">データ：ESPN公開スコアボード（開いたとき・更新ボタン・5分ごとに取得）。Bリーグは公式日程（3時間ごとに自動更新）。時刻はすべて日本時間。<br>
+  <div class="legend">データ：ESPN公開スコアボード（GitHubで20分ごとに自動取得。失敗時は前回のデータを表示。ページは開いたとき・更新ボタン・5分ごとに読み込み）。Bリーグは公式日程（3時間ごとに自動更新）。時刻はすべて日本時間。<br>
   開始は最後に更新した時刻から。サッカーは当日11:00〜23:59開始が「当日」、翌0:00〜翌14:00が「当日後半」。当日後半はサッカーだけ。サッカー以外の「当日」は翌朝の試合まで含みます（MLB・NBAは翌14:00、その他は翌11:00まで）。<br>
   国内カップ戦は、両チームとも1部所属の試合だけ表示します。</div>
 </div>
@@ -414,14 +414,19 @@ function renderAll(){
 // 取得
 let loading = false;
 async function getJSON(u){ const r = await fetch(u, {cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json(); }
-async function loadTop(){
-  const need = [...new Set(leagues().filter(l=>l.top).map(l=>l.top))].filter(k=>!topIds[k]);
-  await Promise.all(need.map(async k=>{
-    try{
-      const j = await getJSON(`https://site.api.espn.com/apis/site/v2/sports/soccer/${k}/teams`);
-      topIds[k] = new Set(j.sports[0].leagues[0].teams.map(t=>String(t.team.id)));
-    }catch(e){}
-  }));
+// ESPN：日本の回線からは接続を拒否されるので、GitHub Actions が取得したファイルを読む
+const ESPN_URL = "https://raw.githubusercontent.com/takeshinakamura0820-crypto/npb-ev/main/espn.json";
+const CATALOG_URL = "https://raw.githubusercontent.com/takeshinakamura0820-crypto/npb-ev/main/espn_catalog.json";
+let espnAt = "";
+async function loadEspn(evs, auto){
+  const j = await getJSON(ESPN_URL + "?t=" + Date.now());
+  Object.entries(j.top||{}).forEach(([k,ids])=>{ topIds[k] = new Set(ids); });
+  const want = new Set(auto.map(l=>l.k)), have = new Set();
+  (j.events||[]).forEach(e=>{ have.add(e.lg); if(!want.has(e.lg)) return;
+    const ev = {lg:e.lg, ms:new Date(e.t).getTime(), h:e.h, a:e.a, hid:e.hid, aid:e.aid, s:e.s};
+    if(e.sc) ev.sc = e.sc; evs.push(ev); });
+  const u = new Date(new Date(j.updated).getTime()+9*3600e3); espnAt = hm(u);
+  return j;
 }
 // Bリーグ：GitHub Actions が公式日程から作るファイルを読む
 const BLEAGUE_URL = "https://raw.githubusercontent.com/takeshinakamura0820-crypto/npb-ev/main/bleague.json";
@@ -435,13 +440,17 @@ async function load(){
   if(loading) return; loading = true; $("refresh").disabled = true; $("upd").textContent = "取得中…";
   const t = todayJ(), days = [0,1,2].map(k=>ymd(t+k*86400e3));
   const auto = leagues().filter(l=>!l.manual && !l.src);
-  const jobs = []; auto.forEach(lg=>days.forEach(d=>jobs.push([lg,d])));
   const seen = new Set(), evs = []; let fail = 0, why = "";
-  await Promise.all([loadTop(), loadBleague(evs).catch(e=>{ fail++; if(!why) why = "Bリーグ:"+(e&&e.message||e); }), ...jobs.map(async ([lg,d])=>{
+  const builtin = new Set(BUILTIN.map(l=>l.k));
+  await Promise.all([
+    loadEspn(evs, auto.filter(l=>builtin.has(l.k))).catch(e=>{ fail++; if(!why) why = "ESPN:"+(e&&e.message||e); }),
+    loadBleague(evs).catch(e=>{ fail++; if(!why) why = "Bリーグ:"+(e&&e.message||e); })]);
+  const jobs = []; auto.filter(l=>!builtin.has(l.k)).forEach(lg=>days.forEach(d=>jobs.push([lg,d])));
+  await Promise.all([...jobs.map(async ([lg,d])=>{
     try{
       const j = await getJSON(`https://site.api.espn.com/apis/site/v2/sports/${lg.sp}/${lg.k}/scoreboard?dates=${d}&limit=300`);
       (j.events||[]).forEach(e=>{
-        if(seen.has(e.id)) return; seen.add(e.id);
+        if(seen.has(lg.k+":"+e.id)) return; seen.add(lg.k+":"+e.id);
         const c = e.competitions[0], side = {}; c.competitors.forEach(x=>side[x.homeAway]=x);
         const s = (e.status&&e.status.type&&e.status.type.state)||"pre";
         const ev = {lg:lg.k, ms:new Date(e.date).getTime(), h:side.home.team.displayName||"", a:side.away.team.displayName||"",
@@ -453,7 +462,7 @@ async function load(){
   })]);
   events = evs; if(evs.length) loadedAt = Date.now();
   const n = new Date(Date.now()+9*3600e3);
-  $("upd").textContent = `更新 ${n.getUTCMonth()+1}/${n.getUTCDate()} ${hm(n)}（日本時間）・${evs.length}試合${fail?`・取得失敗${fail}/${jobs.length}件（${why}）`:""}`;
+  $("upd").textContent = `更新 ${n.getUTCMonth()+1}/${n.getUTCDate()} ${hm(n)}（日本時間）・${evs.length}試合${espnAt?`（データ ${espnAt}時点）`:""}${fail?`・取得失敗${fail}件（${why}）`:""}`;
   loading = false; $("refresh").disabled = false; renderAll();
 }
 
@@ -461,11 +470,7 @@ async function load(){
 let catalog = null;
 async function loadCatalog(){
   if(catalog) return catalog;
-  const sports = ["soccer","basketball","baseball","hockey","football"]; catalog = [];
-  await Promise.all(sports.map(async sp=>{
-    try{ const j = await getJSON(`https://site.api.espn.com/apis/site/v2/leagues/dropdown?sport=${sp}&limit=500`);
-      j.leagues.forEach(l=>catalog.push({k:l.slug, sp, name:l.name})); }catch(e){}
-  }));
+  try{ catalog = await getJSON(CATALOG_URL); }catch(e){ catalog = null; return []; }
   return catalog;
 }
 const EMO = {soccer:"⚽️",basketball:"🏀",baseball:"⚾️",hockey:"🏒",football:"🏈"};
