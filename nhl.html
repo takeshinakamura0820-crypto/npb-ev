@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHL ハンデEV計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f14; --panel:#121820; --panel2:#18202b; --line:#26313f;
+  --ink:#e6edf3; --mute:#8b98a8; --ice:#5cc8ff; --pos:#3ddc97; --neg:#ff5d6c; --gold:#f5c451;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans JP',sans-serif;padding:16px 12px 60px;-webkit-text-size-adjust:100%}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;gap:8px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:900;letter-spacing:.02em}
+h1 span{color:var(--ice)}
+.sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mute);letter-spacing:.12em}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.card h2{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline}
+.card h2 small{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mute);letter-spacing:.12em;font-weight:400}
+.gt{font-size:10px;color:var(--mute);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;margin:12px 0 6px;border-top:1px dashed var(--line);padding-top:10px}
+.gt:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+label{display:block;font-size:10px;color:var(--mute);margin-bottom:3px}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;padding:8px 9px;outline:none}
+input:focus,select:focus{border-color:var(--ice)}
+.giver input{border-left:3px solid var(--gold)} .recv input{border-left:3px solid var(--ice)}
+.seg{display:flex;gap:6px;margin-bottom:8px}
+.seg button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--mute);border-radius:6px;padding:7px;font-size:11px;font-family:inherit;cursor:pointer}
+.seg button.on{border-color:var(--ice);color:var(--ink);background:#14273a}
+.hint{font-size:10px;color:var(--mute);line-height:1.5;margin-top:4px}
+.warn{display:none;background:#3a1219;border:1px solid var(--neg);color:#ffb3bb;font-size:11px;padding:8px 10px;border-radius:6px;margin-bottom:12px}
+.warn.show{display:block}
+.best{background:linear-gradient(135deg,#0f2a20,#121820);border:1px solid var(--pos);border-radius:10px;padding:14px;margin-bottom:14px}
+.best.none{background:var(--panel);border-color:var(--neg)}
+.best .k{font-size:10px;color:var(--mute);font-family:'IBM Plex Mono',monospace;letter-spacing:.15em}
+.best .v{font-size:20px;font-weight:900;margin:4px 0}
+.best .m{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute)}
+.bar{display:flex;height:14px;border-radius:4px;overflow:hidden;margin-bottom:8px}
+.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cell{background:var(--panel2);border-radius:6px;padding:7px 4px;text-align:center}
+.cell .l{font-size:9px;color:var(--mute);line-height:1.3}
+.cell .n{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;margin-top:3px}
+.meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mute);margin-top:8px;line-height:1.6}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px}
+th{font-size:10px;color:var(--mute);font-weight:600;text-align:right;padding:6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
+tr.sel td{background:#14273a}
+tr{cursor:pointer}
+.pos{color:var(--pos);font-weight:700}.neg{color:var(--neg)}.zero{color:var(--mute)}
+.tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;background:var(--pos);color:#04130c;font-weight:700;margin-left:4px}
+.fair{background:var(--gold)}
+footer{margin-top:20px;font-size:10px;color:var(--mute);font-family:'IBM Plex Mono',monospace;text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>NHL <span>Handicap</span> EV</h1><div class="sub">PINNACLE = TRUE PROB → B社 0〜3半</div></div>
+  <div class="sub">SO = 引き分け扱い</div>
+</header>
+
+<div class="grid">
+<section>
+  <div class="card">
+    <h2>ピナクル オッズ <small>PINNACLE</small></h2>
+    <div class="gt">ハンデを出す側</div>
+    <div class="seg"><button id="gA" class="on">Aチーム</button><button id="gB">Bチーム</button></div>
+    <div class="gt">勝敗（延長・SO込み）</div>
+    <div class="row">
+      <div><label>A勝ち</label><input id="mlA" type="number" step="0.001" value="1.65" inputmode="decimal"></div>
+      <div><label>B勝ち</label><input id="mlB" type="number" step="0.001" value="2.35" inputmode="decimal"></div>
+    </div>
+    <div class="gt">60分（3-way）</div>
+    <div class="row3">
+      <div><label>A勝ち</label><input id="t3A" type="number" step="0.001" value="2.05" inputmode="decimal"></div>
+      <div><label>引き分け</label><input id="t3D" type="number" step="0.001" value="4.20" inputmode="decimal"></div>
+      <div><label>B勝ち</label><input id="t3B" type="number" step="0.001" value="3.05" inputmode="decimal"></div>
+    </div>
+
+    <div class="gt">パックライン（延長・SO込み）</div>
+    <div class="row"><div><label>出す側 −1.5</label><input id="p15G" type="number" step="0.001" value="2.60" inputmode="decimal"></div><div><label>もらう側 +1.5</label><input id="p15R" type="number" step="0.001" value="1.53" inputmode="decimal"></div></div>
+    <div class="row"><div><label>出す側 −2.5</label><input id="p25G" type="number" step="0.001" value="4.60" inputmode="decimal"></div><div><label>もらう側 +2.5</label><input id="p25R" type="number" step="0.001" value="1.22" inputmode="decimal"></div></div>
+    <div class="row"><div><label>出す側 −3.5</label><input id="p35G" type="number" step="0.001" value="9.00" inputmode="decimal"></div><div><label>もらう側 +3.5</label><input id="p35R" type="number" step="0.001" value="1.08" inputmode="decimal"></div></div>
+    <div class="hint">−1.5/−2.5/−3.5の勝率の差から、2点差・3点差・4点差以上の勝ちを出します。</div>
+
+    <div class="gt">過去データ由来パラメータ（NHL 2023-24〜2025-26, 3,936試合）</div>
+    <div class="row">
+      <div><label>60分同点→SOまでいく割合 %</label><input id="soShare" type="number" step="0.1" value="32.0" inputmode="decimal"></div>
+      <div><label>SOで出す側が勝つ確率 %（延長勝ちとSO勝ちの切り分け用）</label><input id="soWin" type="number" step="1" value="50" inputmode="decimal"></div>
+    </div>
+    <div class="hint">SO割合はNHL公式APIのレギュラーシーズン実績（2015-26通算は33.7%）。SO勝率は、ピナクル勝敗オッズの「延長勝ち（B社では1点差勝ち）」と「SO勝ち（B社では引き分け）」を分けるためだけに使います。50%は仮定値です。</div>
+
+    <div class="gt">B社の提示ハンデ</div>
+    <select id="hSel"></select>
+
+    <div class="gt">B社 払戻（1賭け）</div>
+    <div class="row">
+      <div><label>勝ち +</label><input id="pW" type="number" step="0.01" value="0.91" inputmode="decimal"></div>
+      <div><label>負け −</label><input id="pL" type="number" step="0.01" value="0.99" inputmode="decimal"></div>
+    </div>
+
+    <div class="gt">ケリー</div>
+    <div class="row">
+      <div><label>資金</label><input id="bank" type="number" step="1000" value="100000" inputmode="decimal"></div>
+      <div><label>ケリー係数</label><input id="kf" type="number" step="0.05" value="0.25" inputmode="decimal"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div id="warn" class="warn"></div>
+  <div id="best" class="best"></div>
+
+  <div class="card">
+    <h2>シナリオ確率 <small>FAIR PROBABILITY</small></h2>
+    <div class="bar" id="bar"></div>
+    <div class="cells" style="grid-template-columns:repeat(3,1fr)">
+      <div class="cell"><div class="l">出す側 4点差以上</div><div class="n" id="cM4">―</div></div>
+      <div class="cell"><div class="l">出す側 3点差</div><div class="n" id="cM3">―</div></div>
+      <div class="cell"><div class="l">出す側 2点差</div><div class="n" id="cM2">―</div></div>
+      <div class="cell"><div class="l">出す側 1点差(延長込)</div><div class="n" id="cM1">―</div></div>
+      <div class="cell"><div class="l">SO(引き分け)</div><div class="n" id="cS">―</div></div>
+      <div class="cell"><div class="l">もらう側勝ち(SO除く)</div><div class="n" id="cD">―</div></div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div class="card">
+    <h2>参考：全ハンデEV <small>適正ハンデ確認用</small></h2>
+    <table>
+      <thead><tr><th>ハンデ</th><th>出す側EV</th><th>もらう側EV</th><th></th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>シナリオ別損益 <span id="selH" style="color:var(--ice)"></span><small>PER 1 UNIT</small></h2>
+    <table>
+      <thead><tr><th>シナリオ</th><th>確率</th><th>出す側</th><th>もらう側</th></tr></thead>
+      <tbody id="tb2"></tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<footer>
+B社判定：延長までの得点・SOは引き分け扱い ／ 1賭け 勝ち+0.91・負け−0.99（変更可）<br>
+k：k点差でNG ／ k.N：k点差で出す側N×10%負け ／ k半：k点差でもらう側勝ち ／ k半N：k+1点差で出す側(10−N)×10%勝ち（SO＝0点差）<br>
+ピナクル：勝敗（延長SO込）・60分3-way・PL −1.5/−2.5/−3.5。マージンは比例配分で除去<br>
+SO割合：NHL公式API レギュラーシーズン 2023-24〜2025-26
+</footer>
+</div>
+
+<script>
+// ===== ハンデ定義（0〜3半, 51種） =====
+// type: int=k, dec=k.N, half=k半, halfx=k半N
+const HANDICAPS = [];
+for (let k = 0; k <= 3; k++) {
+  HANDICAPS.push({key:String(k), k, type:'int', frac:0});
+  for (let n = 1; n <= 9; n++) HANDICAPS.push({key:`${k}.${n}`, k, type:'dec', frac:n/10});
+  HANDICAPS.push({key:`${k}半`, k, type:'half', frac:0});
+  if (k < 3) for (let n = 1; n <= 9; n++) HANDICAPS.push({key:`${k}半${n}`, k, type:'halfx', frac:n/10});
+}
+const SC = ['M4','M3','M2','M1','S','D'];
+const MARGIN = {M4:4, M3:3, M2:2, M1:1, S:0, D:-1}; // 出す側から見た点差（SO=0, D=負け）
+
+// 出す側の取り分 a（+a=勝ち割合, −a=負け割合, 0=NG）
+function giverShare(h, m) {
+  const k = h.k;
+  if (h.type === 'int')  return m > k ? 1 : m === k ? 0 : -1;
+  if (h.type === 'dec')  return m > k ? 1 : m === k ? -h.frac : -1;
+  if (h.type === 'half') return m > k ? 1 : -1;
+  /* halfx */            return m > k+1 ? 1 : m === k+1 ? 1 - h.frac : -1;
+}
+function payout(h, sc, side, W, L) {
+  const a = giverShare(h, MARGIN[sc]);
+  const g = a >= 0 ? a*W : a*L;          // 出す側
+  const r = a >= 0 ? -a*L : -a*W;        // もらう側
+  return side === 'g' ? g : r;
+}
+
+const devig2 = (a, b) => { const ia = 1/a, ib = 1/b; return {p: ia/(ia+ib), m: ia+ib-1}; };
+
+// ===== ピナクル → シナリオ確率 =====
+// −1.5/−2.5/−3.5 はSO勝ちも1点差扱い → P(−x.5勝ち) = 60分で(x+1)点差以上勝ち
+// S = 60分同点 × SO割合、M1 = 勝率(延長SO込) − P(−1.5) − S×q
+function scenarios(inp) {
+  const ml = devig2(inp.mlG, inp.mlR);
+  const s3 = 1/inp.t3G + 1/inp.t3D + 1/inp.t3R;
+  const RG = (1/inp.t3G)/s3, T = (1/inp.t3D)/s3;
+  const a15 = devig2(inp.p15G, inp.p15R), a25 = devig2(inp.p25G, inp.p25R), a35 = devig2(inp.p35G, inp.p35R);
+  const S = T * inp.soShare/100, q = inp.soWin/100;
+  const M4 = a35.p, M3 = a25.p - a35.p, M2 = a15.p - a25.p;
+  const M1 = ml.p - a15.p - S*q;
+  const D = 1 - M4 - M3 - M2 - M1 - S;
+  const otG = ml.p - RG - S*q, otTot = T - S;
+  return {M4, M3, M2, M1, S, D, tie:T, RG, otShare: otTot>0 ? otG/otTot : 0, pML: ml.p,
+          imp1: RG>0 ? (RG - a15.p)/RG : 0,
+          mlM: ml.m, m3: s3-1, plM:[a15.m, a25.m, a35.m],
+          bad: M3 < 0 || M2 < 0 || otG < 0 || otG > otTot || a15.p > RG};
+}
+
+// ===== EV / ケリー =====
+function evFor(pr, h, side, W, L) {
+  let ev = 0; const outs = [];
+  for (const sc of SC) { const r = payout(h, sc, side, W, L); ev += pr[sc] * r; outs.push([pr[sc], r]); }
+  return {ev, outs};
+}
+function kelly(outs) {
+  // max Σp·log(1+f·r) を二分法（導関数=0）
+  const d = f => outs.reduce((a,[p,r]) => a + p*r/(1+f*r), 0);
+  if (d(0) <= 0) return 0;
+  const minR = Math.min(...outs.map(o => o[1]));
+  let lo = 0, hi = minR < 0 ? Math.min(0.999, -0.999/minR) : 0.999;
+  if (d(hi) > 0) return hi;
+  for (let i = 0; i < 80; i++) { const mid = (lo+hi)/2; d(mid) > 0 ? lo = mid : hi = mid; }
+  return lo;
+}
+
+// ===== UI =====
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value);
+const pct = (v, d=2) => (v*100).toFixed(d) + '%';
+const sgn = (v, d=2) => (v >= 0 ? '+' : '') + (v*100).toFixed(d) + '%';
+const cls = v => Math.abs(v) < 1e-9 ? 'zero' : v > 0 ? 'pos' : 'neg';
+let giver = 'A', selKey = '0半5';
+$('hSel').innerHTML = HANDICAPS.map(h => `<option${h.key===selKey?' selected':''}>${h.key}</option>`).join('');
+$('hSel').onchange = () => { selKey = $('hSel').value; run(); };
+$('gA').onclick = () => { giver='A'; $('gA').classList.add('on'); $('gB').classList.remove('on'); run(); };
+$('gB').onclick = () => { giver='B'; $('gB').classList.add('on'); $('gA').classList.remove('on'); run(); };
+
+function run() {
+  const A = giver==='A';
+  const inp = {mlG:num(A?'mlA':'mlB'), mlR:num(A?'mlB':'mlA'),
+    t3G:num(A?'t3A':'t3B'), t3D:num('t3D'), t3R:num(A?'t3B':'t3A'),
+    soShare:num('soShare'), soWin:num('soWin'),
+    p15G:num('p15G'), p15R:num('p15R'), p25G:num('p25G'), p25R:num('p25R'), p35G:num('p35G'), p35R:num('p35R')};
+  const W = num('pW'), L = num('pL'), bank = num('bank'), kf = num('kf');
+  const warn = $('warn'); warn.classList.remove('show');
+  const odds = [inp.mlG, inp.mlR, inp.t3G, inp.t3D, inp.t3R, inp.p15G, inp.p15R, inp.p25G, inp.p25R, inp.p35G, inp.p35R];
+  if (odds.some(o => !(o > 1))) { warn.textContent = 'オッズは1より大きい数値を入れてください'; warn.classList.add('show'); return; }
+
+  const pr = scenarios(inp);
+  if (pr.bad) { warn.textContent = '⚠ 勝敗オッズと60分オッズの整合が取れていません（パックラインの勝率が −1.5 ≥ −2.5 ≥ −3.5 の順になっていない、−1.5勝率が60分勝率を超えている、または延長での出す側勝率が0〜100%の範囲外）。オッズの入れ違いを確認してください。'; warn.classList.add('show'); }
+
+  const cols = {M4:'#ffe08a', M3:'#f5c451', M2:'#d9a63a', M1:'#a87a22', S:'#8b98a8', D:'#5cc8ff'};
+  $('bar').innerHTML = SC.map(k => `<div style="width:${Math.max(0,pr[k])*100}%;background:${cols[k]}"></div>`).join('');
+  SC.forEach(k => $('c'+k).textContent = pct(pr[k]));
+  $('meta').innerHTML = `出す側 真勝率(延長SO込) ${pct(pr.pML)} ・ 60分勝ち ${pct(pr.RG)}<br>60分同点 ${pct(pr.tie)} ・ 延長(3on3)での出す側勝率 ${pct(pr.otShare,1)}<br>60分勝ちのうち1点差 ${pct(pr.imp1,1)}（過去平均22.8%）<br>マージン 勝敗 ${pct(pr.mlM)} ・ 3-way ${pct(pr.m3)} ・ PL ${pr.plM.map(x=>pct(x)).join(' / ')}`;
+
+  // 全ハンデ（参考）＋適正ハンデ
+  let fair = null, fairDiff = Infinity;
+  const rows = HANDICAPS.map(h => {
+    const g = evFor(pr, h, 'g', W, L), r = evFor(pr, h, 'r', W, L);
+    if (Math.abs(g.ev - r.ev) < fairDiff) { fairDiff = Math.abs(g.ev - r.ev); fair = h.key; }
+    return {h, g, r};
+  });
+  $('tb').innerHTML = rows.map(x => `<tr data-k="${x.h.key}" class="${x.h.key===selKey?'sel':''}">
+    <td>${x.h.key}${x.h.key===selKey ? '<span class="tag">提示</span>' : ''}${fair===x.h.key ? '<span class="tag fair">適正</span>' : ''}</td>
+    <td class="${cls(x.g.ev)}">${sgn(x.g.ev)}</td>
+    <td class="${cls(x.r.ev)}">${sgn(x.r.ev)}</td>
+    <td></td></tr>`).join('');
+  document.querySelectorAll('#tb tr').forEach(tr => tr.onclick = () => { selKey = tr.dataset.k; $('hSel').value = selKey; run(); });
+
+  // 提示ハンデの判定
+  const cur = rows.find(x => x.h.key === selKey);
+  const side = cur.g.ev >= cur.r.ev ? 'g' : 'r', b = side === 'g' ? cur.g : cur.r;
+  const kfull = kelly(b.outs), stake = b.ev > 0 ? bank * kfull * kf : 0;
+  const bx = $('best');
+  if (b.ev > 0) {
+    bx.className = 'best';
+    bx.innerHTML = `<div class="k">B社 ${selKey} の判定</div><div class="v">${side==='g'?'出す側':'もらう側'}にベット　<span class="pos">EV ${sgn(b.ev)}</span></div>
+      <div class="m">出す側 ${sgn(cur.g.ev)} ／ もらう側 ${sgn(cur.r.ev)} ／ 適正ハンデ ${fair}<br>フルケリー ${pct(kfull)} × ${kf} → 推奨額 ${Math.round(stake).toLocaleString()}</div>`;
+  } else {
+    bx.className = 'best none';
+    bx.innerHTML = `<div class="k">B社 ${selKey} の判定</div><div class="v">両側EVマイナス（見送り）</div>
+      <div class="m">出す側 ${sgn(cur.g.ev)} ／ もらう側 ${sgn(cur.r.ev)} ／ 適正ハンデ ${fair}</div>`;
+  }
+
+  const h = HANDICAPS.find(x => x.key === selKey);
+  $('selH').textContent = '（' + selKey + '）';
+  const lab = {M4:'出す側 4点差以上勝ち', M3:'出す側 3点差勝ち', M2:'出す側 2点差勝ち', M1:'出す側 1点差勝ち（延長込み）', S:'シュートアウト（引き分け扱い）', D:'もらう側 勝ち（SO除く）'};
+  let eg = 0, er = 0;
+  $('tb2').innerHTML = SC.map(sc => {
+    const a = payout(h, sc, 'g', W, L), b = payout(h, sc, 'r', W, L); eg += pr[sc]*a; er += pr[sc]*b;
+    return `<tr><td>${lab[sc]}</td><td>${pct(pr[sc])}</td><td class="${cls(a)}">${(a>=0?'+':'')+a.toFixed(3)}</td><td class="${cls(b)}">${(b>=0?'+':'')+b.toFixed(3)}</td></tr>`;
+  }).join('') + `<tr><td><b>EV</b></td><td>100%</td><td class="${cls(eg)}">${sgn(eg)}</td><td class="${cls(er)}">${sgn(er)}</td></tr>`;
+}
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', run));
+run();
+</script>
+</body>
+</html>
