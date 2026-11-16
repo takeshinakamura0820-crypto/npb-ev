@@ -90,7 +90,7 @@ footer{margin-top:20px;font-size:10px;color:var(--mute);font-family:'IBM Plex Mo
     <div class="row"><div><label>出す側 −1.5</label><input id="p15G" type="number" step="0.001" value="2.60" inputmode="decimal"></div><div><label>もらう側 +1.5</label><input id="p15R" type="number" step="0.001" value="1.53" inputmode="decimal"></div></div>
     <div class="row"><div><label>出す側 −2.5</label><input id="p25G" type="number" step="0.001" value="4.60" inputmode="decimal"></div><div><label>もらう側 +2.5</label><input id="p25R" type="number" step="0.001" value="1.22" inputmode="decimal"></div></div>
     <div class="row"><div><label>出す側 −3.5</label><input id="p35G" type="number" step="0.001" value="9.00" inputmode="decimal"></div><div><label>もらう側 +3.5</label><input id="p35R" type="number" step="0.001" value="1.08" inputmode="decimal"></div></div>
-    <div class="hint">−1.5/−2.5/−3.5の勝率の差から、2点差・3点差・4点差以上の勝ちを出します。</div>
+    <div class="hint">必要なラインだけ入れればOK（空欄可）。〜1半：−1.5のみ ／ 1半1〜2半：−1.5・−2.5 ／ 2半1〜3半：3本とも。0と0半はパックライン不要。</div>
 
     <div class="gt">過去データ由来パラメータ（NHL 2023-24〜2025-26, 3,936試合）</div>
     <div class="row">
@@ -199,16 +199,29 @@ function scenarios(inp) {
   const ml = devig2(inp.mlG, inp.mlR);
   const s3 = 1/inp.t3G + 1/inp.t3D + 1/inp.t3R;
   const RG = (1/inp.t3G)/s3, T = (1/inp.t3D)/s3;
-  const a15 = devig2(inp.p15G, inp.p15R), a25 = devig2(inp.p25G, inp.p25R), a35 = devig2(inp.p35G, inp.p35R);
+  const line = (g, r) => (g > 1 && r > 1) ? devig2(g, r) : null;   // 空欄=null
+  const a15 = line(inp.p15G, inp.p15R), a25 = line(inp.p25G, inp.p25R), a35 = line(inp.p35G, inp.p35R);
   const S = T * inp.soShare/100, q = inp.soWin/100;
-  const M4 = a35.p, M3 = a25.p - a35.p, M2 = a15.p - a25.p;
-  const M1 = ml.p - a15.p - S*q;
+  // 累積 Gx = P(出す側がx点差以上で勝ち)。空欄のラインは1つ下の累積で埋める
+  // （そのラインを必要としないハンデでは、境界の両側の損益が同じなのでEVは変わらない）
+  const G1 = ml.p - S*q;
+  const G2 = a15 ? a15.p : G1, G3 = a25 ? a25.p : G2, G4 = a35 ? a35.p : G3;
+  const M4 = G4, M3 = G3 - G4, M2 = G2 - G3, M1 = G1 - G2;
   const D = 1 - M4 - M3 - M2 - M1 - S;
   const otG = ml.p - RG - S*q, otTot = T - S;
   return {M4, M3, M2, M1, S, D, tie:T, RG, otShare: otTot>0 ? otG/otTot : 0, pML: ml.p,
-          imp1: RG>0 ? (RG - a15.p)/RG : 0,
-          mlM: ml.m, m3: s3-1, plM:[a15.m, a25.m, a35.m],
-          bad: M3 < 0 || M2 < 0 || otG < 0 || otG > otTot || a15.p > RG};
+          imp1: (RG>0 && a15) ? (RG - a15.p)/RG : null,
+          has: {15: !!a15, 25: !!a25, 35: !!a35},
+          known: {M1: !!a15, M2: !!a15 && !!a25, M3: !!a25 && !!a35, M4: !!a35},
+          mlM: ml.m, m3: s3-1, plM:[a15, a25, a35].map(a => a ? a.m : null),
+          bad: M1 < 0 || M2 < 0 || M3 < 0 || otG < 0 || otG > otTot || (a15 && a15.p > RG)};
+}
+
+// ハンデに必要なライン：x点差と(x+1)点差で損益が変わるなら −x.5 が必要
+function needLines(h) {
+  const n = [];
+  [[1,15],[2,25],[3,35]].forEach(([x,l]) => { if (giverShare(h, x) !== giverShare(h, Math.min(x+1, 4))) n.push(l); });
+  return n;
 }
 
 // ===== EV / ケリー =====
@@ -248,7 +261,7 @@ function run() {
     p15G:num('p15G'), p15R:num('p15R'), p25G:num('p25G'), p25R:num('p25R'), p35G:num('p35G'), p35R:num('p35R')};
   const W = num('pW'), L = num('pL'), bank = num('bank'), kf = num('kf');
   const warn = $('warn'); warn.classList.remove('show');
-  const odds = [inp.mlG, inp.mlR, inp.t3G, inp.t3D, inp.t3R, inp.p15G, inp.p15R, inp.p25G, inp.p25R, inp.p35G, inp.p35R];
+  const odds = [inp.mlG, inp.mlR, inp.t3G, inp.t3D, inp.t3R];
   if (odds.some(o => !(o > 1))) { warn.textContent = 'オッズは1より大きい数値を入れてください'; warn.classList.add('show'); return; }
 
   const pr = scenarios(inp);
@@ -256,36 +269,44 @@ function run() {
 
   const cols = {M4:'#ffe08a', M3:'#f5c451', M2:'#d9a63a', M1:'#a87a22', S:'#8b98a8', D:'#5cc8ff'};
   $('bar').innerHTML = SC.map(k => `<div style="width:${Math.max(0,pr[k])*100}%;background:${cols[k]}"></div>`).join('');
-  SC.forEach(k => $('c'+k).textContent = pct(pr[k]));
-  $('meta').innerHTML = `出す側 真勝率(延長SO込) ${pct(pr.pML)} ・ 60分勝ち ${pct(pr.RG)}<br>60分同点 ${pct(pr.tie)} ・ 延長(3on3)での出す側勝率 ${pct(pr.otShare,1)}<br>60分勝ちのうち1点差 ${pct(pr.imp1,1)}（過去平均22.8%）<br>マージン 勝敗 ${pct(pr.mlM)} ・ 3-way ${pct(pr.m3)} ・ PL ${pr.plM.map(x=>pct(x)).join(' / ')}`;
+  SC.forEach(k => $('c'+k).textContent = (pr.known[k] === false) ? '―' : pct(pr[k]));
+  $('meta').innerHTML = `出す側 真勝率(延長SO込) ${pct(pr.pML)} ・ 60分勝ち ${pct(pr.RG)}<br>60分同点 ${pct(pr.tie)} ・ 延長(3on3)での出す側勝率 ${pct(pr.otShare,1)}<br>60分勝ちのうち1点差 ${pr.imp1===null ? '―' : pct(pr.imp1,1)}（過去平均22.8%）<br>マージン 勝敗 ${pct(pr.mlM)} ・ 3-way ${pct(pr.m3)} ・ PL ${pr.plM.map(x=>x===null?'―':pct(x)).join(' / ')}`;
 
   // 全ハンデ（参考）＋適正ハンデ
   let fair = null, fairDiff = Infinity;
   const rows = HANDICAPS.map(h => {
+    const miss = needLines(h).filter(l => !pr.has[l]);
     const g = evFor(pr, h, 'g', W, L), r = evFor(pr, h, 'r', W, L);
-    if (Math.abs(g.ev - r.ev) < fairDiff) { fairDiff = Math.abs(g.ev - r.ev); fair = h.key; }
-    return {h, g, r};
+    if (!miss.length && Math.abs(g.ev - r.ev) < fairDiff) { fairDiff = Math.abs(g.ev - r.ev); fair = h.key; }
+    return {h, g, r, miss};
   });
+  const mtxt = m => m.map(l => '−' + (l/10).toFixed(1)).join('・');
   $('tb').innerHTML = rows.map(x => `<tr data-k="${x.h.key}" class="${x.h.key===selKey?'sel':''}">
     <td>${x.h.key}${x.h.key===selKey ? '<span class="tag">提示</span>' : ''}${fair===x.h.key ? '<span class="tag fair">適正</span>' : ''}</td>
-    <td class="${cls(x.g.ev)}">${sgn(x.g.ev)}</td>
-    <td class="${cls(x.r.ev)}">${sgn(x.r.ev)}</td>
+    ${x.miss.length ? `<td class="zero" colspan="2">要 ${mtxt(x.miss)}</td>` :
+      `<td class="${cls(x.g.ev)}">${sgn(x.g.ev)}</td><td class="${cls(x.r.ev)}">${sgn(x.r.ev)}</td>`}
     <td></td></tr>`).join('');
   document.querySelectorAll('#tb tr').forEach(tr => tr.onclick = () => { selKey = tr.dataset.k; $('hSel').value = selKey; run(); });
 
   // 提示ハンデの判定
   const cur = rows.find(x => x.h.key === selKey);
+  const fairTxt = fair || '―';
+  if (cur.miss.length) {
+    $('best').className = 'best none';
+    $('best').innerHTML = `<div class="k">B社 ${selKey} の判定</div><div class="v">パックライン ${mtxt(cur.miss)} が必要です</div><div class="m">このハンデは ${mtxt(needLines(cur.h))} のオッズで計算します</div>`;
+  } else {
   const side = cur.g.ev >= cur.r.ev ? 'g' : 'r', b = side === 'g' ? cur.g : cur.r;
   const kfull = kelly(b.outs), stake = b.ev > 0 ? bank * kfull * kf : 0;
   const bx = $('best');
   if (b.ev > 0) {
     bx.className = 'best';
     bx.innerHTML = `<div class="k">B社 ${selKey} の判定</div><div class="v">${side==='g'?'出す側':'もらう側'}にベット　<span class="pos">EV ${sgn(b.ev)}</span></div>
-      <div class="m">出す側 ${sgn(cur.g.ev)} ／ もらう側 ${sgn(cur.r.ev)} ／ 適正ハンデ ${fair}<br>フルケリー ${pct(kfull)} × ${kf} → 推奨額 ${Math.round(stake).toLocaleString()}</div>`;
+      <div class="m">出す側 ${sgn(cur.g.ev)} ／ もらう側 ${sgn(cur.r.ev)} ／ 適正ハンデ ${fairTxt}<br>フルケリー ${pct(kfull)} × ${kf} → 推奨額 ${Math.round(stake).toLocaleString()}</div>`;
   } else {
     bx.className = 'best none';
     bx.innerHTML = `<div class="k">B社 ${selKey} の判定</div><div class="v">両側EVマイナス（見送り）</div>
-      <div class="m">出す側 ${sgn(cur.g.ev)} ／ もらう側 ${sgn(cur.r.ev)} ／ 適正ハンデ ${fair}</div>`;
+      <div class="m">出す側 ${sgn(cur.g.ev)} ／ もらう側 ${sgn(cur.r.ev)} ／ 適正ハンデ ${fairTxt}</div>`;
+  }
   }
 
   const h = HANDICAPS.find(x => x.key === selKey);
@@ -294,7 +315,7 @@ function run() {
   let eg = 0, er = 0;
   $('tb2').innerHTML = SC.map(sc => {
     const a = payout(h, sc, 'g', W, L), b = payout(h, sc, 'r', W, L); eg += pr[sc]*a; er += pr[sc]*b;
-    return `<tr><td>${lab[sc]}</td><td>${pct(pr[sc])}</td><td class="${cls(a)}">${(a>=0?'+':'')+a.toFixed(3)}</td><td class="${cls(b)}">${(b>=0?'+':'')+b.toFixed(3)}</td></tr>`;
+    return `<tr><td>${lab[sc]}</td><td>${pr.known[sc]===false ? '―' : pct(pr[sc])}</td><td class="${cls(a)}">${(a>=0?'+':'')+a.toFixed(3)}</td><td class="${cls(b)}">${(b>=0?'+':'')+b.toFixed(3)}</td></tr>`;
   }).join('') + `<tr><td><b>EV</b></td><td>100%</td><td class="${cls(eg)}">${sgn(eg)}</td><td class="${cls(er)}">${sgn(er)}</td></tr>`;
 }
 
