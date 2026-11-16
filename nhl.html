@@ -154,7 +154,7 @@ footer{margin-top:20px;font-size:10px;color:var(--mute);font-family:'IBM Plex Mo
 
 <footer>
 B社判定：延長までの得点・SOは引き分け扱い ／ 1賭け 勝ち+0.91・負け−0.99（変更可）<br>
-k：k点差でNG ／ k.N：k点差で出す側N×10%負け ／ k半：k点差でもらう側勝ち ／ k半N：k+1点差で出す側(10−N)×10%勝ち（SO＝0点差）<br>
+k：k点差でNG ／ 0.N：1点差で出す側(10−N)×10%勝ち・SOで出す側N×10%負け ／ k.N(k≥1)：k点差で出す側N×10%負け ／ k半：k点差でもらう側勝ち ／ k半N：k+1点差で出す側(10−N)×10%勝ち（SO＝0点差）<br>
 ピナクル：勝敗（延長SO込）・60分3-way・PL −1.5/−2.5/−3.5。マージンは比例配分で除去<br>
 SO割合：NHL公式API レギュラーシーズン 2023-24〜2025-26
 </footer>
@@ -177,6 +177,8 @@ const MARGIN = {M4:4, M3:3, M2:2, M1:1, S:0, D:-1}; // 出す側から見た点�
 function giverShare(h, m) {
   const k = h.k;
   if (h.type === 'int')  return m > k ? 1 : m === k ? 0 : -1;
+  if (h.type === 'dec' && k === 0) // 0.N（プロ野球B社と同じ）：1点差で(10−N)×10%勝ち、同点(SO)でN×10%負け
+                         return m > 1 ? 1 : m === 1 ? 1 - h.frac : m === 0 ? -h.frac : -1;
   if (h.type === 'dec')  return m > k ? 1 : m === k ? -h.frac : -1;
   if (h.type === 'half') return m > k ? 1 : -1;
   /* halfx */            return m > k+1 ? 1 : m === k+1 ? 1 - h.frac : -1;
